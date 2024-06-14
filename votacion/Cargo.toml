@@ -1,7 +1,7 @@
 [package]
 name = "votacion"
 version = "0.1.0"
-authors = ["[your_name] <[your_email]>"]
+authors = ["Vicente García Martí, Maria Luisa Britez, Julia Lunazzi, Juan Cruz Pissaco"]
 edition = "2021"
 
 [dependencies]
