@@ -146,8 +146,8 @@ mod votacion {
         fn get_finalizada(&self, current_time: Timestamp) -> bool;
         /// Devuelve los votos de un candidato
         fn get_votos_candidato(&self, id_candidato: &AccountId, current_time: Timestamp) -> Result<u32>;
-        // Devuelve los votos de todos los candidatos, almacenados por id
-        // fn get_votos(&self) -> Vec<(AccountId, u32)>;
+        /// Devuelve los votos de todos los candidatos, almacenados por id
+        fn get_votos(&self, current_time: Timestamp) -> Result< Vec<(AccountId, u32)> >;
     }
     
     #[ink::trait_definition]
@@ -353,6 +353,13 @@ mod votacion {
                 Err(VotacionError::UsuarioNoEsCandidato)
             }
         }
+
+        fn get_votos(&self, current_time: Timestamp)  -> Result< Vec<(AccountId, u32)> > {
+            if !self.get_finalizada(current_time) {
+                return Err(VotacionError::EleccionNoFinalizada);
+            }
+            Ok(self.votos.clone())
+        }
     }
 
     impl GettersEleccion for Eleccion {
@@ -421,12 +428,6 @@ mod votacion {
 
         fn get_edad(&self) -> u8 {
             self.edad
-        }
-    }
-
-    impl Default for Votacion {
-        fn default() -> Self {
-            Self::new()
         }
     }
 
@@ -988,6 +989,15 @@ mod votacion {
         }
 
         #[test]
+        fn test_postular_candidato_eleccion_error_es_postulado_votante() {
+            let mut eleccion = Eleccion::new(0, create_date(1, 1, 2024), create_date(31, 12, 2024));
+            let id_candidato = AccountId::from([0x1; 32]);
+
+            assert!(eleccion.postular_votante(id_candidato, create_date(1, 1, 2023)).is_ok());
+            assert_eq!(eleccion.postular_candidato(id_candidato, create_date(1, 1, 2023)), Err(VotacionError::UsuarioEsPostuladoVotante));
+        }
+
+        #[test]
         fn test_postular_votante_eleccion() {
             let mut eleccion = Eleccion::new(0, create_date(1, 1, 2024), create_date(31, 12, 2024));
             let id_votante = AccountId::from([0x1; 32]);
@@ -1082,6 +1092,14 @@ mod votacion {
             assert!(eleccion.postular_candidato(id_candidato, create_date(1, 1, 2024)).is_ok());
             assert_eq!(eleccion.agregar_candidato(id_candidato, create_date(31, 12, 2024)), Err(VotacionError::UsuarioEsVotante));
         }
+
+        #[test]
+        fn test_agregar_candidato_eleccion_error_usuario_es_votanteno_postulado() {
+            let mut eleccion = Eleccion::new(0, create_date(1, 1, 2025), create_date(1, 1, 2025));
+            let id_candidato = AccountId::from([0x1; 32]);
+    
+            assert_eq!(eleccion.agregar_candidato(id_candidato, create_date(31, 12, 2024)), Err(VotacionError::UsuarioNoPostuladoCandidato));
+        }
     
         #[test]
         fn test_agregar_votante_eleccion() {
@@ -1109,6 +1127,14 @@ mod votacion {
 
             assert!(eleccion.postular_votante(votante_id, create_date(1, 1, 2023)).is_ok());
             assert_eq!(eleccion.agregar_votante(votante_id, create_date(1, 1, 2025)), Err(VotacionError::EleccionYaFinalizada));
+        }
+
+        #[test]
+        fn test_agregar_votante_eleccion_error_usuario_no_postulado_votante() {
+            let mut eleccion = Eleccion::new(0, create_date(1, 1, 2024), create_date(31, 12, 2024));
+            let votante_id = AccountId::from([0x1; 32]);
+
+            assert_eq!(eleccion.agregar_votante(votante_id, create_date(1, 1, 2023)), Err(VotacionError::UsuarioNoPostuladoVotante));
         }
     
         #[test]
@@ -1229,6 +1255,22 @@ mod votacion {
         }
 
         #[test]
+        fn test_votar_eleccion_error_usuario_ya_voto() {
+            let votante_id = AccountId::from([0x2; 32]);
+            let id_candidato = AccountId::from([0x1; 32]);
+            let mut eleccion = Eleccion::new(0, create_date(1, 1, 2024), create_date(31, 12, 2024));
+
+            eleccion.postular_votante(votante_id, create_date(31, 12, 2023)).unwrap();
+            eleccion.postular_candidato(id_candidato, create_date(31, 12, 2023)).unwrap();
+            eleccion.agregar_candidato(id_candidato, create_date(31, 12, 2023)).unwrap();
+            eleccion.agregar_votante(votante_id, create_date(31, 12, 2023)).unwrap();
+
+            eleccion.votar(&votante_id, &id_candidato, create_date(15, 6, 2024)).unwrap();
+            
+            assert_eq!(eleccion.votar(&votante_id, &id_candidato, create_date(15, 6, 2024)), Err(VotacionError::UsuarioYaVoto));
+        }
+
+        #[test]
         fn test_ya_voto_eleccion() {
             let votante_id = AccountId::from([0x2; 32]);
             let id_candidato = AccountId::from([0x1; 32]);
@@ -1243,6 +1285,8 @@ mod votacion {
             eleccion.votar(&votante_id, &id_candidato, create_date(15, 6, 2024)).unwrap();
             assert!(eleccion.ya_voto(&votante_id));
         }
+
+
 
         // tests de EleccionSystemInk
         #[ink::test]
@@ -1629,6 +1673,48 @@ mod votacion {
         }
 
         #[ink::test]
+        fn test_get_votos_candidato_votacion_error_eleccion_no_finalizada() {
+            let accounts = default_accounts::<DefaultEnvironment>();
+            set_caller::<DefaultEnvironment>(accounts.frank);
+            let mut votacion = Votacion::new();
+            let id_eleccion = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
+            set_block_timestamp::<DefaultEnvironment>(create_date(31, 12, 2023));
+            
+            votacion.crear_usuario(accounts.alice, "Alice".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345679".to_string(), 30).unwrap();
+            votacion.aceptar_usuario(accounts.alice).unwrap();
+            set_caller::<DefaultEnvironment>(accounts.alice);
+            votacion.postular_candidato(id_eleccion).unwrap();
+
+            set_caller::<DefaultEnvironment>(accounts.frank);
+            votacion.agregar_candidato(id_eleccion, accounts.alice).unwrap();
+
+            set_block_timestamp::<DefaultEnvironment>(create_date(5, 5, 2024));
+
+            assert_eq!(votacion.get_votos_candidato(id_eleccion, accounts.alice), Err(VotacionError::EleccionNoFinalizada));
+        }
+
+        #[ink::test]
+        fn test_get_votos_candidato_votacion_error_usuario_no_es_candidato() {
+            let accounts = default_accounts::<DefaultEnvironment>();
+            set_caller::<DefaultEnvironment>(accounts.frank);
+            let mut votacion = Votacion::new();
+            let id_eleccion = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
+            set_block_timestamp::<DefaultEnvironment>(create_date(31, 12, 2023));
+            
+            votacion.crear_usuario(accounts.alice, "Alice".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345679".to_string(), 30).unwrap();
+            votacion.aceptar_usuario(accounts.alice).unwrap();
+            set_caller::<DefaultEnvironment>(accounts.alice);
+            votacion.postular_candidato(id_eleccion).unwrap();
+
+            set_caller::<DefaultEnvironment>(accounts.frank);
+            votacion.agregar_candidato(id_eleccion, accounts.alice).unwrap();
+
+            set_block_timestamp::<DefaultEnvironment>(create_date(5, 5, 2025));
+
+            assert_eq!(votacion.get_votos_candidato(id_eleccion, accounts.bob), Err(VotacionError::UsuarioNoEsCandidato));
+        }
+
+        #[ink::test]
         fn test_get_iniciada_votacion() {
             let mut votacion = Votacion::new();
             let id_eleccion = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
@@ -1690,7 +1776,7 @@ mod errors {
         UsuarioEsPostuladoVotante,
     }
 
-    impl core::fmt::Display for VotacionError {
+    /*impl core::fmt::Display for VotacionError {
         fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
             match self {
                 VotacionError::FechaInvalida => write!(f, "Fecha inválida"),
@@ -1717,5 +1803,5 @@ mod errors {
                 VotacionError::UsuarioEsPostuladoVotante => write!(f, "Usuario postulado como votante"),
             }
         }
-    }
+    }*/
 }
