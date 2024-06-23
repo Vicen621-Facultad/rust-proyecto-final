@@ -3,6 +3,7 @@
 pub use self::votacion::{
     Votacion,
     VotacionRef,
+    ReportMessage
 };
 pub use self::errors::VotacionError;
 
@@ -87,7 +88,7 @@ mod votacion {
         fn get_admin(&self) -> AccountId;
         /// Devuelve true si el id pasado es el admin del contrato, false en cualquier otro caso
         #[ink(message)]
-        fn is_admin(&self, other: AccountId) -> bool;
+        fn caller_is_admin(&self) -> bool;
         /// Crea un usuario y lo agrega a la lista de usuarios_por_aceptar
         #[ink(message)]
         fn crear_usuario(&mut self, id: AccountId, nombre: String, apellido: String, direccion: String, dni: String, edad: u8) -> Result<Usuario>;
@@ -479,7 +480,6 @@ mod votacion {
     }
 
     impl Votacion {
-        #[ink(constructor)]
         pub fn default() -> Self {
             Self {
                 admin: Self::env().caller(),
@@ -501,22 +501,38 @@ mod votacion {
             }
         }
 
-        /// Funcion debug para cambiar el admin del contrato
+        /// Cambia el admin del contrato
         #[ink(message)]
         pub fn set_admin(&mut self, new_admin: AccountId) -> Result<()> {
-            if !self.is_admin(self.env().caller()) {
+            if !self.caller_is_admin() {
                 return Err(VotacionError::NoEsAdmin);
             }
 
             self.admin = new_admin;
             Ok(())
         }
+
+        /// Cambia el reporte del contrato
+        #[ink(message)]
+        pub fn set_reporte(&mut self, new_reporte: AccountId) -> Result<()> {
+            if !self.caller_is_admin() {
+                return Err(VotacionError::NoEsAdmin);
+            }
+
+            self.reporte = new_reporte;
+            Ok(())
+        }
+
+        /// Devuelve true si el caller es el reporte, false en cualquier otro caso
+        fn caller_is_reporte(&self) -> bool {
+            self.env().caller() == self.reporte
+        }
     }
 
     impl EleccionManager for Votacion {
         #[ink(message)]
         fn crear_eleccion(&mut self, fecha_inicio: Timestamp, fecha_fin: Timestamp) -> Result<u32> {
-            if !self.is_admin(self.env().caller()) {
+            if !self.caller_is_admin() {
                 return Err(VotacionError::NoEsAdmin);
             }
 
@@ -547,8 +563,8 @@ mod votacion {
         }
 
         #[ink(message)]
-        fn is_admin(&self, other: AccountId) -> bool {
-            self.get_admin() == other
+        fn caller_is_admin(&self) -> bool {
+            self.get_admin() == self.env().caller()
         }
 
         #[ink(message)]
@@ -575,7 +591,7 @@ mod votacion {
 
         #[ink(message)]
         fn aceptar_usuario(&mut self, id: AccountId) -> Result<()>{
-            if !self.is_admin(self.env().caller()) {
+            if !self.caller_is_admin() {
                 return Err(VotacionError::NoEsAdmin);
             }
 
@@ -643,7 +659,7 @@ mod votacion {
 
         #[ink(message)]
         fn agregar_candidato(&mut self, id_eleccion: u32, id_candidato: AccountId) -> Result<()> {
-            if !self.is_admin(self.env().caller()) {
+            if !self.caller_is_admin() {
                 return Err(VotacionError::NoEsAdmin);
             }
 
@@ -662,7 +678,7 @@ mod votacion {
 
         #[ink(message)]
         fn agregar_votante(&mut self, id_eleccion: u32, id_votante: AccountId) -> Result<()> {
-            if !self.is_admin(self.env().caller()) {
+            if !self.caller_is_admin() {
                 return Err(VotacionError::NoEsAdmin);
             }
 
@@ -681,7 +697,7 @@ mod votacion {
 
         #[ink(message)]
         fn votar(&mut self, id_eleccion: u32, id_votante: AccountId, id_candidato: AccountId) -> Result<()> {
-            if !self.is_admin(self.env().caller()) {
+            if !self.caller_is_admin() {
                 return Err(VotacionError::NoEsAdmin);
             }
 
@@ -700,7 +716,7 @@ mod votacion {
 
         #[ink(message)]
         fn ya_voto(&self, id_eleccion: u32, id_votante: AccountId) -> Result<bool> {
-            if !self.is_admin(self.env().caller()) {
+            if !self.caller_is_admin() {
                 return Err(VotacionError::NoEsAdmin);
             }
 
@@ -717,7 +733,7 @@ mod votacion {
 
         #[ink(message)]
         fn get_iniciada(&self, id_eleccion: u32) -> Result<bool> {
-            if !self.is_admin(self.env().caller()) {
+            if !self.caller_is_admin() {
                 return Err(VotacionError::NoEsAdmin);
             }
 
@@ -730,7 +746,7 @@ mod votacion {
 
         #[ink(message)]
         fn get_finalizada(&self, id_eleccion: u32) -> Result<bool> {
-            if !self.is_admin(self.env().caller()) {
+            if !self.caller_is_admin() {
                 return Err(VotacionError::NoEsAdmin);
             }
 
@@ -743,7 +759,7 @@ mod votacion {
 
         #[ink(message)]
         fn get_votos_candidato(&self, id_eleccion: u32, id_candidato: AccountId) -> Result<u32> {
-            if !self.is_admin(self.env().caller()) {
+            if !self.caller_is_admin() {
                 return Err(VotacionError::NoEsAdmin);
             }
 
@@ -758,13 +774,8 @@ mod votacion {
     //TODO: Hacer test de esta implementacion
     impl ReportMessage for Votacion {
         #[ink(message)]
-        fn is_reporte(&self, caller: AccountId) -> bool {
-            self.reporte == caller
-        }
-
-        #[ink(message)]
         fn reporte_registro_votantes(&self, eleccion_id: u32) -> Result<u32> {
-            if self.is_reporte(self.env().caller()) {
+            if self.caller_is_reporte() {
                 return Err(VotacionError::SoloReportes);
             }
 
@@ -775,7 +786,7 @@ mod votacion {
 
         #[ink(message)]
         fn reporte_participacion(&self, eleccion_id: u32) -> Result<(u32, u128)> {
-            if self.is_reporte(self.env().caller()) {
+            if self.caller_is_reporte() {
                 return Err(VotacionError::SoloReportes);
             }
     
@@ -786,7 +797,7 @@ mod votacion {
 
         #[ink(message)]
         fn reporte_resultado(&self, eleccion_id: u32) -> Result<Vec<(AccountId, u32)>> {
-            if self.is_reporte(self.env().caller()) {
+            if self.caller_is_reporte() {
                 return Err(VotacionError::SoloReportes);
             }
 
@@ -797,10 +808,6 @@ mod votacion {
 
     #[ink::trait_definition]
     pub trait ReportMessage {
-        /// Devuelve true si el caller es el reporte, false en cualquier otro caso
-        #[ink(message)]
-        fn is_reporte(&self, caller: AccountId) -> bool;
-
         /// Reporte de registro de votantes para una elección específica
         #[ink(message)]
         fn reporte_registro_votantes(&self, eleccion_id: u32) -> Result<u32>;
