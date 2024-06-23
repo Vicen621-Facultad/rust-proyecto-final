@@ -825,8 +825,6 @@ mod votacion {
         fn reporte_resultado(&self, current_time: Timestamp) -> Result<Vec<(AccountId, u32)>>;
     }
 
-   
-
     #[cfg(test)]
     mod tests {
         use super::*;
@@ -1424,7 +1422,7 @@ mod votacion {
         fn test_postular_candidato_votacion() {
             let accounts = default_accounts::<DefaultEnvironment>();
             set_caller::<DefaultEnvironment>(accounts.alice);
-            let mut votacion = Votacion::new();
+            let mut votacion = Votacion::default();
             let id_eleccion = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
 
             set_block_timestamp::<DefaultEnvironment>(create_date(31, 12, 2023));
@@ -1441,7 +1439,7 @@ mod votacion {
         #[ink::test]
         fn test_postular_candidato_votacion_error_usuario_no_aceptado() {
             let accounts = default_accounts::<DefaultEnvironment>();
-            let mut votacion = Votacion::new();
+            let mut votacion = Votacion::default();
             let id_eleccion = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
 
             set_block_timestamp::<DefaultEnvironment>(create_date(31, 12, 2023));
@@ -1458,7 +1456,7 @@ mod votacion {
         fn test_postular_candidato_votacion_error_usuario_no_encontrado() {
             let accounts = default_accounts::<DefaultEnvironment>();
             set_caller::<DefaultEnvironment>(accounts.alice);
-            let mut votacion = Votacion::new();
+            let mut votacion = Votacion::default();
             let id_eleccion = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
 
             set_block_timestamp::<DefaultEnvironment>(create_date(31, 12, 2023));
@@ -1473,7 +1471,7 @@ mod votacion {
             let accounts = default_accounts::<DefaultEnvironment>();
             set_caller::<DefaultEnvironment>(accounts.alice);
             let mut votacion = Votacion::default();
-            let eleccion_id = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
+            let id_eleccion = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
 
             set_block_timestamp::<DefaultEnvironment>(create_date(31, 12, 2023));
             
@@ -1493,7 +1491,7 @@ mod votacion {
             let accounts = default_accounts::<DefaultEnvironment>();
             set_caller::<DefaultEnvironment>(accounts.alice);
             let mut votacion = Votacion::default();
-            let eleccion_id = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
+            let id_eleccion = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
 
             set_block_timestamp::<DefaultEnvironment>(create_date(31, 12, 2023));
             
@@ -1511,7 +1509,7 @@ mod votacion {
             let accounts = default_accounts::<DefaultEnvironment>();
             set_caller::<DefaultEnvironment>(accounts.alice);
             let mut votacion = Votacion::default();
-            let eleccion_id = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
+            let id_eleccion = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
 
             set_block_timestamp::<DefaultEnvironment>(create_date(31, 12, 2023));
             
@@ -1528,7 +1526,7 @@ mod votacion {
         fn test_postular_votante_votacion_error_usuario_no_aceptado() {
             let accounts = default_accounts::<DefaultEnvironment>();
             let mut votacion = Votacion::default();
-            let eleccion_id = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
+            let id_eleccion = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
 
             set_block_timestamp::<DefaultEnvironment>(create_date(31, 12, 2023));
             
@@ -1543,7 +1541,7 @@ mod votacion {
         #[ink::test]
         fn test_postular_votante_votacion_error_usuario_no_encontrado() {
             let accounts = default_accounts::<DefaultEnvironment>();
-            let mut votacion = Votacion::new();
+            let mut votacion = Votacion::default();
             let id_eleccion = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
 
             set_block_timestamp::<DefaultEnvironment>(create_date(31, 12, 2023));
@@ -1558,7 +1556,7 @@ mod votacion {
             let accounts = default_accounts::<DefaultEnvironment>();
             set_caller::<DefaultEnvironment>(accounts.alice);
             let mut votacion = Votacion::default();
-            let eleccion_id = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
+            let id_eleccion = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
 
             set_block_timestamp::<DefaultEnvironment>(create_date(31, 12, 2023));
             
@@ -1579,7 +1577,7 @@ mod votacion {
             let accounts = default_accounts::<DefaultEnvironment>();
             set_caller::<DefaultEnvironment>(accounts.alice);
             let mut votacion = Votacion::default();
-            let eleccion_id = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
+            let id_eleccion = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
 
             set_block_timestamp::<DefaultEnvironment>(create_date(31, 12, 2023));
             
@@ -1596,7 +1594,7 @@ mod votacion {
         fn test_votar_votacion() {
             let accounts = default_accounts::<DefaultEnvironment>();
             let mut votacion = Votacion::default();
-            let eleccion_id = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
+            let id_eleccion = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
 
             set_block_timestamp::<DefaultEnvironment>(create_date(31, 12, 2023));
             
@@ -1625,7 +1623,7 @@ mod votacion {
             let accounts = default_accounts::<DefaultEnvironment>();
             set_caller::<DefaultEnvironment>(accounts.frank);
             let mut votacion = Votacion::default();
-            let eleccion_id = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
+            let id_eleccion = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
             set_block_timestamp::<DefaultEnvironment>(create_date(31, 12, 2023));
             
             votacion.crear_usuario(accounts.bob, "Bob".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
@@ -1652,7 +1650,7 @@ mod votacion {
             let accounts = default_accounts::<DefaultEnvironment>();
             set_caller::<DefaultEnvironment>(accounts.alice);
             let mut votacion = Votacion::default();
-            let eleccion_id = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
+            let id_eleccion = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
             set_block_timestamp::<DefaultEnvironment>(create_date(31, 12, 2023));
             
             votacion.crear_usuario(accounts.bob, "Bob".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
@@ -1671,7 +1669,7 @@ mod votacion {
             let accounts = default_accounts::<DefaultEnvironment>();
             set_caller::<DefaultEnvironment>(accounts.frank);
             let mut votacion = Votacion::default();
-            let eleccion_id = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
+            let id_eleccion = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
             set_block_timestamp::<DefaultEnvironment>(create_date(31, 12, 2023));
             
             votacion.crear_usuario(accounts.bob, "Bob".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
@@ -1698,7 +1696,7 @@ mod votacion {
             let accounts = default_accounts::<DefaultEnvironment>();
             set_caller::<DefaultEnvironment>(accounts.alice);
             let mut votacion = Votacion::default();
-            let eleccion_id = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
+            let id_eleccion = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
             set_block_timestamp::<DefaultEnvironment>(create_date(31, 12, 2023));
             
             votacion.crear_usuario(accounts.bob, "Bob".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
@@ -1718,7 +1716,7 @@ mod votacion {
             let accounts = default_accounts::<DefaultEnvironment>();
             set_caller::<DefaultEnvironment>(accounts.frank);
             let mut votacion = Votacion::default();
-            let eleccion_id = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
+            let id_eleccion = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
             set_block_timestamp::<DefaultEnvironment>(create_date(31, 12, 2023));
             
             votacion.crear_usuario(accounts.bob, "Bob".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
@@ -1739,7 +1737,7 @@ mod votacion {
             let accounts = default_accounts::<DefaultEnvironment>();
             set_caller::<DefaultEnvironment>(accounts.frank);
             let mut votacion = Votacion::default();
-            let eleccion_id = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
+            let id_eleccion = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
             set_block_timestamp::<DefaultEnvironment>(create_date(31, 12, 2023));
             
             votacion.crear_usuario(accounts.bob, "Bob".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
@@ -1769,7 +1767,7 @@ mod votacion {
             let accounts = default_accounts::<DefaultEnvironment>();
             set_caller::<DefaultEnvironment>(accounts.frank);
             let mut votacion = Votacion::default();
-            let eleccion_id = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
+            let id_eleccion = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
             set_block_timestamp::<DefaultEnvironment>(create_date(31, 12, 2023));
             
             votacion.crear_usuario(accounts.bob, "Bob".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
@@ -1807,7 +1805,7 @@ mod votacion {
         fn test_get_votos_candidato_votacion_error_eleccion_no_finalizada() {
             let accounts = default_accounts::<DefaultEnvironment>();
             set_caller::<DefaultEnvironment>(accounts.frank);
-            let mut votacion = Votacion::new();
+            let mut votacion = Votacion::default();
             let id_eleccion = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
             set_block_timestamp::<DefaultEnvironment>(create_date(31, 12, 2023));
             
@@ -1828,7 +1826,7 @@ mod votacion {
         fn test_get_votos_candidato_votacion_error_usuario_no_es_candidato() {
             let accounts = default_accounts::<DefaultEnvironment>();
             set_caller::<DefaultEnvironment>(accounts.frank);
-            let mut votacion = Votacion::new();
+            let mut votacion = Votacion::default();
             let id_eleccion = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
             set_block_timestamp::<DefaultEnvironment>(create_date(31, 12, 2023));
             
@@ -1848,7 +1846,7 @@ mod votacion {
         #[ink::test]
         fn test_get_iniciada_votacion() {
             let mut votacion = Votacion::default();
-            let eleccion_id = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
+            let id_eleccion = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
             set_block_timestamp::<DefaultEnvironment>(create_date(15, 6, 2024));
             assert!(votacion.get_iniciada(id_eleccion).unwrap());
         }
@@ -1862,7 +1860,7 @@ mod votacion {
         #[ink::test]
         fn test_get_finalizada_votacion() {
             let mut votacion = Votacion::default();
-            let eleccion_id = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
+            let id_eleccion = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
             set_block_timestamp::<DefaultEnvironment>(create_date(1, 1, 2025));
             assert!(votacion.get_finalizada(id_eleccion).unwrap());
         }
