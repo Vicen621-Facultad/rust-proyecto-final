@@ -6,7 +6,7 @@ edition = "2021"
 
 [dependencies]
 ink = { version = "5.0.0", default-features = false }
-votacion = { path = "../votacion", default-features = false, features = ["ink-as-dependency"] }
+votacion = { path = "votacion", default-features = false, features = ["ink-as-dependency"] }
 
 [dev-dependencies]
 ink_e2e = { version = "5.0.0" }
