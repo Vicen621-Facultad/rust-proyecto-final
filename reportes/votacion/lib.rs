@@ -524,7 +524,8 @@ mod votacion {
         }
 
         /// Devuelve true si el caller es el reporte, false en cualquier otro caso
-        fn caller_is_reporte(&self) -> bool {
+        #[ink(message)]
+        pub fn caller_is_reporte(&self) -> bool {
             self.env().caller() == self.reporte
         }
     }
