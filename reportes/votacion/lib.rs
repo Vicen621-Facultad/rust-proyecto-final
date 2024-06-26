@@ -7,6 +7,7 @@ pub use self::votacion::{
 };
 pub use self::errors::VotacionError;
 
+//TODO: pasar a usar una fecha y crearla con dia mes y año, hacer funcion para pasar de fecha a timestamp
 #[ink::contract]
 mod votacion {
     use crate::errors::VotacionError;
@@ -91,7 +92,7 @@ mod votacion {
         fn caller_is_admin(&self) -> bool;
         /// Crea un usuario y lo agrega a la lista de usuarios_por_aceptar
         #[ink(message)]
-        fn crear_usuario(&mut self, id: AccountId, nombre: String, apellido: String, direccion: String, dni: String, edad: u8) -> Result<Usuario>;
+        fn crear_usuario(&mut self, nombre: String, apellido: String, direccion: String, dni: String, edad: u8) -> Result<Usuario>;
         /// Acepta un usuario de la lista usuarios_por_aceptar y lo agrega a la lista de usuarios
         #[ink(message)]
         fn aceptar_usuario(&mut self, id: AccountId) -> Result<()>;
@@ -563,7 +564,9 @@ mod votacion {
         }
 
         #[ink(message)]
-        fn crear_usuario(&mut self, id: AccountId, nombre: String, apellido: String, direccion: String, dni: String, edad: u8) -> Result<Usuario> {
+        fn crear_usuario(&mut self, nombre: String, apellido: String, direccion: String, dni: String, edad: u8) -> Result<Usuario> {
+            let id = self.env().caller();
+
             if self.get_usuario_sin_aceptar(id).is_ok() {
                 return Err(VotacionError::UsuarioNoAceptado);
             }
@@ -949,7 +952,7 @@ mod votacion {
             let accounts =
                 default_accounts::<DefaultEnvironment>();
             let mut votacion = Votacion::default();
-            let usuario = votacion.crear_usuario(accounts.bob, "Juan".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
+            let usuario = votacion.crear_usuario("Juan".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
             assert_eq!(usuario.get_addres(), accounts.bob);
             assert_eq!(usuario.get_nombre(), "Juan".to_string());
             assert_eq!(usuario.get_apellido(), "Perez".to_string());
@@ -963,8 +966,8 @@ mod votacion {
             let accounts =
                 default_accounts::<DefaultEnvironment>();
             let mut votacion = Votacion::default();
-            votacion.crear_usuario(accounts.bob, "Juan".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
-            let usuario = votacion.crear_usuario(accounts.bob, "Juan".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30);
+            votacion.crear_usuario("Juan".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
+            let usuario = votacion.crear_usuario("Juan".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30);
             assert_eq!(usuario, Err(VotacionError::UsuarioNoAceptado));
         }
 
@@ -974,7 +977,7 @@ mod votacion {
                 default_accounts::<DefaultEnvironment>();
             let mut votacion = Votacion::default();
             votacion.usuarios.push(Usuario::new(accounts.bob, "Juan".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30));
-            let usuario = votacion.crear_usuario(accounts.bob, "Juan".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30);
+            let usuario = votacion.crear_usuario("Juan".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30);
             assert_eq!(usuario, Err(VotacionError::UsuarioYaRegistrado));
         }
 
@@ -983,7 +986,7 @@ mod votacion {
             let accounts =
                 default_accounts::<DefaultEnvironment>();
             let mut votacion = Votacion::default();
-            votacion.crear_usuario(accounts.bob, "Juan".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
+            votacion.crear_usuario("Juan".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
             votacion.aceptar_usuario(accounts.bob).unwrap();
             assert_eq!(votacion.usuarios_sin_aceptar.len(), 0);
             assert_eq!(votacion.usuarios.len(), 1);
@@ -995,7 +998,7 @@ mod votacion {
                 default_accounts::<DefaultEnvironment>();
             set_caller::<DefaultEnvironment>(accounts.charlie);
             let mut votacion = Votacion::default();
-            votacion.crear_usuario(accounts.bob, "Juan".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
+            votacion.crear_usuario("Juan".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
             set_caller::<DefaultEnvironment>(accounts.alice);
             let usuario = votacion.aceptar_usuario(accounts.bob);
             assert_eq!(usuario, Err(VotacionError::NoEsAdmin));
@@ -1015,7 +1018,7 @@ mod votacion {
             let accounts =
                 default_accounts::<DefaultEnvironment>();
             let mut votacion = Votacion::default();
-            votacion.crear_usuario(accounts.bob, "Juan".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
+            votacion.crear_usuario("Juan".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
             assert_eq!(votacion.get_usuario_sin_aceptar(accounts.bob).unwrap().get_addres(), accounts.bob);
         }
 
@@ -1033,7 +1036,7 @@ mod votacion {
             let accounts =
                 default_accounts::<DefaultEnvironment>();
             let mut votacion = Votacion::default();
-            votacion.crear_usuario(accounts.bob, "Juan".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
+            votacion.crear_usuario("Juan".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
             votacion.aceptar_usuario(accounts.bob).unwrap();
             assert_eq!(votacion.get_usuario(accounts.bob).unwrap().get_addres(), accounts.bob);
         }
@@ -1426,7 +1429,7 @@ mod votacion {
 
             set_block_timestamp::<DefaultEnvironment>(create_date(31, 12, 2023));
             
-            votacion.crear_usuario(accounts.bob, "Juan".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
+            votacion.crear_usuario("Juan".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
             votacion.aceptar_usuario(accounts.bob).unwrap();
 
             set_caller::<DefaultEnvironment>(accounts.bob);
@@ -1444,7 +1447,7 @@ mod votacion {
             set_block_timestamp::<DefaultEnvironment>(create_date(31, 12, 2023));
             
             //Creo el usuario pero no es aceptado
-            votacion.crear_usuario(accounts.bob, "Juan".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
+            votacion.crear_usuario("Juan".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
             //votacion.aceptar_usuario(accounts.bob).unwrap();
 
             set_caller::<DefaultEnvironment>(accounts.bob);
@@ -1474,7 +1477,7 @@ mod votacion {
 
             set_block_timestamp::<DefaultEnvironment>(create_date(31, 12, 2023));
             
-            votacion.crear_usuario(accounts.bob, "Juan".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
+            votacion.crear_usuario("Juan".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
             votacion.aceptar_usuario(accounts.bob).unwrap();
 
             set_caller::<DefaultEnvironment>(accounts.bob);
@@ -1494,7 +1497,7 @@ mod votacion {
 
             set_block_timestamp::<DefaultEnvironment>(create_date(31, 12, 2023));
             
-            votacion.crear_usuario(accounts.bob, "Juan".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
+            votacion.crear_usuario("Juan".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
             votacion.aceptar_usuario(accounts.bob).unwrap();
             
             set_caller::<DefaultEnvironment>(accounts.bob);
@@ -1512,7 +1515,7 @@ mod votacion {
 
             set_block_timestamp::<DefaultEnvironment>(create_date(31, 12, 2023));
             
-            votacion.crear_usuario(accounts.bob, "Juan".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
+            votacion.crear_usuario("Juan".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
             votacion.aceptar_usuario(accounts.bob).unwrap();
 
             set_caller::<DefaultEnvironment>(accounts.bob);
@@ -1530,7 +1533,7 @@ mod votacion {
             set_block_timestamp::<DefaultEnvironment>(create_date(31, 12, 2023));
             
             //Creo el usuario pero no es aceptado
-            votacion.crear_usuario(accounts.bob, "Juan".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
+            votacion.crear_usuario("Juan".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
             //votacion.aceptar_usuario(accounts.bob).unwrap();
 
             set_caller::<DefaultEnvironment>(accounts.bob);
@@ -1559,7 +1562,7 @@ mod votacion {
 
             set_block_timestamp::<DefaultEnvironment>(create_date(31, 12, 2023));
             
-            votacion.crear_usuario(accounts.bob, "Juan".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
+            votacion.crear_usuario("Juan".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
             votacion.aceptar_usuario(accounts.bob).unwrap();
 
             set_caller::<DefaultEnvironment>(accounts.bob);
@@ -1580,7 +1583,7 @@ mod votacion {
 
             set_block_timestamp::<DefaultEnvironment>(create_date(31, 12, 2023));
             
-            votacion.crear_usuario(accounts.bob, "Juan".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
+            votacion.crear_usuario("Juan".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
             votacion.aceptar_usuario(accounts.bob).unwrap();
 
             set_caller::<DefaultEnvironment>(accounts.bob);
@@ -1597,10 +1600,10 @@ mod votacion {
 
             set_block_timestamp::<DefaultEnvironment>(create_date(31, 12, 2023));
             
-            votacion.crear_usuario(accounts.bob, "Bob".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
+            votacion.crear_usuario("Bob".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
             votacion.aceptar_usuario(accounts.bob).unwrap();
 
-            votacion.crear_usuario(accounts.alice, "Alice".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345679".to_string(), 30).unwrap();
+            votacion.crear_usuario("Alice".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345679".to_string(), 30).unwrap();
             votacion.aceptar_usuario(accounts.alice).unwrap();
             
             set_caller::<DefaultEnvironment>(accounts.bob);
@@ -1626,7 +1629,7 @@ mod votacion {
             let id_eleccion = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
             set_block_timestamp::<DefaultEnvironment>(create_date(31, 12, 2023));
             
-            votacion.crear_usuario(accounts.bob, "Bob".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
+            votacion.crear_usuario("Bob".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
             votacion.aceptar_usuario(accounts.bob).unwrap();
 
             set_caller::<DefaultEnvironment>(accounts.bob);
@@ -1645,10 +1648,10 @@ mod votacion {
             let id_eleccion = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
             set_block_timestamp::<DefaultEnvironment>(create_date(31, 12, 2023));
             
-            votacion.crear_usuario(accounts.bob, "Bob".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
+            votacion.crear_usuario("Bob".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
             votacion.aceptar_usuario(accounts.bob).unwrap();
 
-            votacion.crear_usuario(accounts.alice, "Alice".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345679".to_string(), 30).unwrap();
+            votacion.crear_usuario("Alice".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345679".to_string(), 30).unwrap();
             votacion.aceptar_usuario(accounts.alice).unwrap();
 
             set_caller::<DefaultEnvironment>(accounts.bob);
@@ -1674,7 +1677,7 @@ mod votacion {
             let id_eleccion = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
             set_block_timestamp::<DefaultEnvironment>(create_date(31, 12, 2023));
             
-            votacion.crear_usuario(accounts.bob, "Bob".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
+            votacion.crear_usuario("Bob".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
             votacion.aceptar_usuario(accounts.bob).unwrap();
 
             set_caller::<DefaultEnvironment>(accounts.bob);
@@ -1694,7 +1697,7 @@ mod votacion {
             let id_eleccion = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
             set_block_timestamp::<DefaultEnvironment>(create_date(31, 12, 2023));
             
-            votacion.crear_usuario(accounts.bob, "Bob".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
+            votacion.crear_usuario("Bob".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
             votacion.aceptar_usuario(accounts.bob).unwrap();
 
             set_caller::<DefaultEnvironment>(accounts.bob);
@@ -1715,11 +1718,11 @@ mod votacion {
             let id_eleccion = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
             set_block_timestamp::<DefaultEnvironment>(create_date(31, 12, 2023));
             
-            votacion.crear_usuario(accounts.bob, "Bob".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
+            votacion.crear_usuario("Bob".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
             votacion.aceptar_usuario(accounts.bob).unwrap();
 
             
-            votacion.crear_usuario(accounts.alice, "Alice".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345679".to_string(), 30).unwrap();
+            votacion.crear_usuario("Alice".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345679".to_string(), 30).unwrap();
             votacion.aceptar_usuario(accounts.alice).unwrap();
 
             set_caller::<DefaultEnvironment>(accounts.bob);
@@ -1747,10 +1750,10 @@ mod votacion {
             let id_eleccion = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
             set_block_timestamp::<DefaultEnvironment>(create_date(31, 12, 2023));
             
-            votacion.crear_usuario(accounts.bob, "Bob".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
+            votacion.crear_usuario("Bob".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
             votacion.aceptar_usuario(accounts.bob).unwrap();
 
-            votacion.crear_usuario(accounts.alice, "Alice".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345679".to_string(), 30).unwrap();
+            votacion.crear_usuario("Alice".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345679".to_string(), 30).unwrap();
             votacion.aceptar_usuario(accounts.alice).unwrap();
 
             set_caller::<DefaultEnvironment>(accounts.bob);
@@ -1787,7 +1790,7 @@ mod votacion {
             let id_eleccion = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
             set_block_timestamp::<DefaultEnvironment>(create_date(31, 12, 2023));
             
-            votacion.crear_usuario(accounts.alice, "Alice".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345679".to_string(), 30).unwrap();
+            votacion.crear_usuario("Alice".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345679".to_string(), 30).unwrap();
             votacion.aceptar_usuario(accounts.alice).unwrap();
             set_caller::<DefaultEnvironment>(accounts.alice);
             votacion.postular_candidato(id_eleccion).unwrap();
@@ -1808,7 +1811,7 @@ mod votacion {
             let id_eleccion = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
             set_block_timestamp::<DefaultEnvironment>(create_date(31, 12, 2023));
             
-            votacion.crear_usuario(accounts.alice, "Alice".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345679".to_string(), 30).unwrap();
+            votacion.crear_usuario("Alice".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345679".to_string(), 30).unwrap();
             votacion.aceptar_usuario(accounts.alice).unwrap();
             set_caller::<DefaultEnvironment>(accounts.alice);
             votacion.postular_candidato(id_eleccion).unwrap();
