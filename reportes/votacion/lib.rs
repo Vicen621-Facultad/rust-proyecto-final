@@ -117,9 +117,9 @@ mod votacion {
         /// Dado un votante postulado, es aceptado por el Admin
         #[ink(message)]
         fn agregar_votante(&mut self, id_eleccion: u32, id_votante: AccountId) -> Result<()>;
-        /// Vota un usuario por un candidato
+        /// Vota por un candidato en una eleccion
         #[ink(message)]
-        fn votar(&mut self, id_eleccion: u32, id_votante: AccountId, id_candidato: AccountId) -> Result<()>;
+        fn votar(&mut self, id_eleccion: u32, id_candidato: AccountId) -> Result<()>;
         /// Devuelve true si el usuario ya voto, false en cualquier otro caso
         #[ink(message)]
         fn ya_voto(&self, id_eleccion: u32, id_votante: AccountId) -> Result<bool>;
@@ -211,7 +211,7 @@ mod votacion {
             if self.is_postulado_votante(&id_votante) {
                 return Err(VotacionError::UsuarioEsPostuladoVotante);
             }
-            //Aniado votante postulado
+            // Añado votante postulado
             self.votantes_sin_aceptar.push(id_votante);
             Ok(())
         }
@@ -232,7 +232,8 @@ mod votacion {
             if self.is_postulado_votante(&id_candidato) {
                 return Err(VotacionError::UsuarioEsPostuladoVotante);
             }
-            //Aniado candidato postulado
+
+            // Añado candidato postulado
             self.candidatos_sin_aceptar.push(id_candidato);
             Ok(())
         }
@@ -249,10 +250,6 @@ mod votacion {
             if !self.is_postulado_candidato(&id_candidato) {
                 return Err(VotacionError::UsuarioNoPostuladoCandidato);
             }
-            //No es necesario, debido a que postularse a votante/candidato es excluyente ->
-            /*if self.is_postulado_votante(&id_candidato) {
-                return Err(VotacionError::UsuarioEsPostuladoVotante);
-            }*/
 
             if self.is_candidato(&id_candidato) {
                 return Err(VotacionError::UsuarioEsCandidato);
@@ -261,6 +258,7 @@ mod votacion {
             if self.is_votante(&id_candidato) {
                 return Err(VotacionError::UsuarioEsVotante);
             }
+
             //Transfiero el id desde 'candidatos sin aceptar de la eleccion', 
             //-> hacia 'candidatos de la eleccion' (candidatos aceptados por el admin)
             if let Some(pos) = self.candidatos_sin_aceptar.iter().position(|candidato| *candidato == id_candidato) {
@@ -284,10 +282,6 @@ mod votacion {
             if !self.is_postulado_votante(&id_votante) {
                 return Err(VotacionError::UsuarioNoPostuladoVotante);
             }
-            //No es necesario, debido a que postularse a votante/candidato es excluyente ->
-            /*if self.is_postulado_candidato(&id_candidato) {
-                return Err(VotacionError::UsuarioEsPostuladoVotante);
-            }*/
 
             if self.is_votante(&id_votante) {
                 return Err(VotacionError::UsuarioEsVotante);
@@ -296,6 +290,7 @@ mod votacion {
             if self.is_candidato(&id_votante) {
                 return Err(VotacionError::UsuarioEsCandidato);
             }
+
             //Transfiero el id desde 'votantes sin aceptar de la eleccion', 
             //-> hacia 'votantes de la eleccion' (votantes aceptados por el admin)
             if let Some(pos) = self.votantes_sin_aceptar.iter().position(|votante| *votante == id_votante) {
@@ -524,8 +519,7 @@ mod votacion {
         }
 
         /// Devuelve true si el caller es el reporte, false en cualquier otro caso
-        #[ink(message)]
-        pub fn caller_is_reporte(&self) -> bool {
+        fn caller_is_reporte(&self) -> bool {
             self.env().caller() == self.reporte
         }
     }
@@ -697,19 +691,16 @@ mod votacion {
         }
 
         #[ink(message)]
-        fn votar(&mut self, id_eleccion: u32, id_votante: AccountId, id_candidato: AccountId) -> Result<()> {
-            if !self.caller_is_admin() {
-                return Err(VotacionError::NoEsAdmin);
-            }
-
-            if self.get_usuario(id_candidato).is_err() || self.get_usuario(id_votante).is_err(){
+        fn votar(&mut self, id_eleccion: u32, id_candidato: AccountId) -> Result<()> {
+            let caller = self.env().caller();
+            if self.get_usuario(id_candidato).is_err() || self.get_usuario(caller).is_err(){
                 return Err(VotacionError::UsuarioNoEncontrado);
             }
 
             let timestamp = self.env().block_timestamp();
 
             if let Some(eleccion) = self.elecciones.get_mut(id_eleccion as usize) {
-                eleccion.votar(&id_votante, &id_candidato, timestamp)
+                eleccion.votar(&caller, &id_candidato, timestamp)
             } else {
                 Err(VotacionError::EleccionNoEncontrada)
             }
@@ -776,7 +767,7 @@ mod votacion {
     impl ReportMessage for Votacion {
         #[ink(message)]
         fn reporte_registro_votantes(&self, eleccion_id: u32) -> Result<u32> {
-            if self.caller_is_reporte() {
+            if !self.caller_is_reporte() {
                 return Err(VotacionError::SoloReportes);
             }
 
@@ -787,7 +778,7 @@ mod votacion {
 
         #[ink(message)]
         fn reporte_participacion(&self, eleccion_id: u32) -> Result<(u32, u128)> {
-            if self.caller_is_reporte() {
+            if !self.caller_is_reporte() {
                 return Err(VotacionError::SoloReportes);
             }
     
@@ -798,7 +789,7 @@ mod votacion {
 
         #[ink(message)]
         fn reporte_resultado(&self, eleccion_id: u32) -> Result<Vec<(AccountId, u32)>> {
-            if self.caller_is_reporte() {
+            if !self.caller_is_reporte() {
                 return Err(VotacionError::SoloReportes);
             }
 
@@ -1620,37 +1611,11 @@ mod votacion {
             votacion.agregar_candidato(id_eleccion, accounts.alice).unwrap();
 
             set_block_timestamp::<DefaultEnvironment>(create_date(15, 6, 2024));
+            set_caller::<DefaultEnvironment>(accounts.bob);
 
-            assert!(votacion.votar(id_eleccion, accounts.bob, accounts.alice).is_ok());
+            assert!(votacion.votar(id_eleccion, accounts.alice).is_ok());
             let eleccion = votacion.get_eleccion(id_eleccion).unwrap();
             assert!(eleccion.ya_voto(&accounts.bob));
-        }
-
-        #[ink::test]
-        fn test_votar_votacion_error_no_es_admin() {
-            let accounts = default_accounts::<DefaultEnvironment>();
-            set_caller::<DefaultEnvironment>(accounts.frank);
-            let mut votacion = Votacion::default();
-            let id_eleccion = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
-            set_block_timestamp::<DefaultEnvironment>(create_date(31, 12, 2023));
-            
-            votacion.crear_usuario(accounts.bob, "Bob".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
-            votacion.aceptar_usuario(accounts.bob).unwrap();
-
-            votacion.crear_usuario(accounts.alice, "Alice".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345679".to_string(), 30).unwrap();
-            votacion.aceptar_usuario(accounts.alice).unwrap();
-
-            set_caller::<DefaultEnvironment>(accounts.bob);
-            votacion.postular_votante(id_eleccion).unwrap();
-            set_caller::<DefaultEnvironment>(accounts.alice);
-            votacion.postular_candidato(id_eleccion).unwrap();
-            set_caller::<DefaultEnvironment>(accounts.frank);
-            votacion.agregar_votante(id_eleccion, accounts.bob).unwrap();
-            votacion.agregar_candidato(id_eleccion, accounts.alice).unwrap();
-
-            set_block_timestamp::<DefaultEnvironment>(create_date(15, 6, 2024));
-            set_caller::<DefaultEnvironment>(accounts.alice);
-            assert_eq!(votacion.votar(id_eleccion, accounts.bob, accounts.alice), Err(VotacionError::NoEsAdmin));
         }
 
         #[ink::test]
@@ -1668,8 +1633,8 @@ mod votacion {
             votacion.postular_votante(id_eleccion).unwrap();
 
             set_block_timestamp::<DefaultEnvironment>(create_date(15, 6, 2024));
-            set_caller::<DefaultEnvironment>(accounts.alice);
-            assert_eq!(votacion.votar(id_eleccion, accounts.bob, accounts.alice), Err(VotacionError::UsuarioNoEncontrado));
+            set_caller::<DefaultEnvironment>(accounts.bob);
+            assert_eq!(votacion.votar(id_eleccion, accounts.alice), Err(VotacionError::UsuarioNoEncontrado));
         }
 
         #[ink::test]
@@ -1695,7 +1660,9 @@ mod votacion {
             votacion.agregar_candidato(id_eleccion, accounts.alice).unwrap();
 
             set_block_timestamp::<DefaultEnvironment>(create_date(15, 6, 2024));
-            votacion.votar(id_eleccion, accounts.bob, accounts.alice).unwrap();
+            set_caller::<DefaultEnvironment>(accounts.bob);
+            votacion.votar(id_eleccion, accounts.alice).unwrap();
+            set_caller::<DefaultEnvironment>(accounts.frank);
             assert!(votacion.ya_voto(id_eleccion, accounts.bob).unwrap());
         }
 
@@ -1765,8 +1732,10 @@ mod votacion {
             votacion.agregar_candidato(id_eleccion, accounts.alice).unwrap();
 
             set_block_timestamp::<DefaultEnvironment>(create_date(15, 6, 2024));
-            votacion.votar(id_eleccion, accounts.bob, accounts.alice).unwrap();
+            set_caller::<DefaultEnvironment>(accounts.bob);
+            votacion.votar(id_eleccion, accounts.alice).unwrap();
             set_block_timestamp::<DefaultEnvironment>(create_date(1, 1, 2025));
+            set_caller::<DefaultEnvironment>(accounts.frank);
             assert_eq!(votacion.get_votos_candidato(id_eleccion, accounts.alice).unwrap(), 1);
         }
 
@@ -1794,7 +1763,8 @@ mod votacion {
             votacion.agregar_candidato(id_eleccion, accounts.alice).unwrap();
 
             set_block_timestamp::<DefaultEnvironment>(create_date(15, 6, 2024));
-            votacion.votar(id_eleccion, accounts.bob, accounts.alice).unwrap();
+            set_caller::<DefaultEnvironment>(accounts.bob);
+            votacion.votar(id_eleccion, accounts.alice).unwrap();
 
 
             set_block_timestamp::<DefaultEnvironment>(create_date(1, 1, 2025));
@@ -1869,6 +1839,12 @@ mod votacion {
         fn test_get_finalizada_votacion() {
             let mut votacion = Votacion::default();
             let id_eleccion = votacion.crear_eleccion(create_date(1, 1, 2024), create_date(31, 12, 2024)).unwrap();
+            set_block_timestamp::<DefaultEnvironment>(create_date(1, 1, 2023));
+            assert!(!votacion.get_finalizada(id_eleccion).unwrap());
+
+            set_block_timestamp::<DefaultEnvironment>(create_date(15, 6, 2024));
+            assert!(!votacion.get_finalizada(id_eleccion).unwrap());
+
             set_block_timestamp::<DefaultEnvironment>(create_date(1, 1, 2025));
             assert!(votacion.get_finalizada(id_eleccion).unwrap());
         }
