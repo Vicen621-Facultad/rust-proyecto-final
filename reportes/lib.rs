@@ -1,69 +1,51 @@
 #![cfg_attr(not(feature = "std"), no_std, no_main)]
 
+//FIXME: Cuando intento instanciar este contrato me da error de code rejected
+/*CodeRejected
+
+The contract's code was found to be invalid during validation.The most likely cause of this is that an API was used which is not supported by thenode. This happens if an older node is used with a new version of ink!. Try updatingyour node to the newest available version.A more detailed error can be found on the node console if debug messages are enabledby supplying `-lruntime::contracts=debug`.
+
+New code rejected on wasmi instantiation! */
 #[ink::contract]
 mod reportes {
+    use votacion::VotacionRef;
+    use votacion::VotacionError;
+    use votacion::ReportMessage;
+    use ink::prelude::vec::Vec;
+    type Result<T> = core::result::Result<T, VotacionError>;
 
-    /// Defines the storage of your contract.
-    /// Add new fields to the below struct in order
-    /// to add new static storage fields to your contract.
     #[ink(storage)]
     pub struct Reportes {
-        /// Stores a single `bool` value on the storage.
-        value: bool,
+        votacion: VotacionRef,
     }
 
     impl Reportes {
-        /// Constructor that initializes the `bool` value to the given `init_value`.
         #[ink(constructor)]
-        pub fn new(init_value: bool) -> Self {
-            Self { value: init_value }
-        }
-
-        /// Constructor that initializes the `bool` value to `false`.
-        ///
-        /// Constructors can delegate to other constructors.
-        #[ink(constructor)]
-        pub fn default() -> Self {
-            Self::new(Default::default())
-        }
-
-        /// A message that can be called on instantiated contracts.
-        /// This one flips the value of the stored `bool` from `true`
-        /// to `false` and vice versa.
-        #[ink(message)]
-        pub fn flip(&mut self) {
-            self.value = !self.value;
-        }
-
-        /// Simply returns the current value of our `bool`.
-        #[ink(message)]
-        pub fn get(&self) -> bool {
-            self.value
+        pub fn new(votacion: VotacionRef) -> Self {
+            Self { votacion }
         }
     }
 
-    /// Unit tests in Rust are normally defined within such a `#[cfg(test)]`
-    /// module and test functions are marked with a `#[test]` attribute.
-    /// The below code is technically just normal Rust code.
+    impl ReportMessage for Reportes {
+        #[ink(message)]
+        fn reporte_registro_votantes(&self, eleccion_id: u32) -> Result<u32> {
+            self.votacion.reporte_registro_votantes(eleccion_id)
+        }
+
+        #[ink(message)]
+        fn reporte_participacion(&self, eleccion_id: u32) -> Result<(u32, u128)> {
+            self.votacion.reporte_participacion(eleccion_id)
+        }
+
+        #[ink(message)]
+        fn reporte_resultado(&self, eleccion_id: u32) -> Result<Vec<(AccountId, u32)>> {
+            self.votacion.reporte_resultado(eleccion_id)
+        }
+    }
+
     #[cfg(test)]
     mod tests {
-        /// Imports all the definitions from the outer scope so we can use them here.
         use super::*;
-
-        /// We test if the default constructor does its job.
-        #[ink::test]
-        fn default_works() {
-            let reportes = Reportes::default();
-            assert_eq!(reportes.get(), false);
-        }
-
-        /// We test a simple use case of our contract.
-        #[ink::test]
-        fn it_works() {
-            let mut reportes = Reportes::new(false);
-            assert_eq!(reportes.get(), false);
-            reportes.flip();
-            assert_eq!(reportes.get(), true);
-        }
+        //TODO: Hacer tests
     }
 }
