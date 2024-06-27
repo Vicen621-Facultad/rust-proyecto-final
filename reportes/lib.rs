@@ -6,6 +6,7 @@
 The contract's code was found to be invalid during validation.The most likely cause of this is that an API was used which is not supported by thenode. This happens if an older node is used with a new version of ink!. Try updatingyour node to the newest available version.A more detailed error can be found on the node console if debug messages are enabledby supplying `-lruntime::contracts=debug`.
 
 New code rejected on wasmi instantiation! */
+//TODO: Hacer distintos structs para cada reporte y devolver ese struct
 #[ink::contract]
 mod reportes {
     use votacion::VotacionRef;
