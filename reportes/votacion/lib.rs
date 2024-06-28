@@ -3,7 +3,10 @@
 pub use self::votacion::{
     Votacion,
     VotacionRef,
-    ReportMessage
+    ReportMessage,
+    DataParticipacion,
+    DataRegistroVotantes,
+    DataResultado
 };
 pub use self::errors::VotacionError;
 
@@ -406,11 +409,11 @@ mod votacion {
 
     //TODO: Hacer test de esta implementacion
     impl ReportMessageEleccion for Eleccion {
-        fn reporte_registro_votantes(&self) -> u32 {
-            self.get_cant_votantes()
+        fn reporte_registro_votantes(&self) -> DataRegistroVotantes {
+            DataRegistroVotantes::new(self.get_cant_votantes())
         }
 
-        fn reporte_participacion(&self, current_time: &Fecha) -> Result<(u32, u128)> {
+        fn reporte_participacion(&self, current_time: &Fecha) -> Result<DataParticipacion> {
             if !self.get_finalizada(current_time) {
                 return Err(VotacionError::EleccionNoFinalizada);
             }
@@ -419,15 +422,15 @@ mod votacion {
             let num_votantes_voto = self.votantes_voto.len() as u128;
 
             if num_votantes == 0 {
-                return Ok((0, 0));
+                return Ok(DataParticipacion::new(0,0));
             }
 
             let participacion = (num_votantes_voto / num_votantes ) * 100;
 
-            Ok((num_votantes_voto as u32, participacion))
+            Ok(DataParticipacion::new(num_votantes_voto as u32, participacion))
         }
 
-        fn reporte_resultado(&self, current_time: &Fecha) -> Result<Vec<(AccountId, u32)>> {
+        fn reporte_resultado(&self, current_time: &Fecha) -> Result<DataResultado> {
             if !self.get_finalizada(current_time) {
                 return Err(VotacionError::EleccionNoFinalizada);
             }
@@ -435,7 +438,7 @@ mod votacion {
             let mut resultados = self.votos.clone();
             resultados.sort_by_key(|(_, voto)| *voto);
     
-            Ok(resultados)
+            Ok(DataResultado::new(resultados))
         }
     }
 
@@ -782,7 +785,7 @@ mod votacion {
     //TODO: Hacer test de esta implementacion
     impl ReportMessage for Votacion {
         #[ink(message)]
-        fn reporte_registro_votantes(&self, eleccion_id: u32) -> Result<u32> {
+        fn reporte_registro_votantes(&self, eleccion_id: u32) -> Result<DataRegistroVotantes> {
             if !self.caller_is_reporte() {
                 return Err(VotacionError::SoloReportes);
             }
@@ -793,7 +796,7 @@ mod votacion {
         }
 
         #[ink(message)]
-        fn reporte_participacion(&self, eleccion_id: u32) -> Result<(u32, u128)> {
+        fn reporte_participacion(&self, eleccion_id: u32) -> Result<DataParticipacion> {
             if !self.caller_is_reporte() {
                 return Err(VotacionError::SoloReportes);
             }
@@ -805,7 +808,7 @@ mod votacion {
         }
 
         #[ink(message)]
-        fn reporte_resultado(&self, eleccion_id: u32) -> Result<Vec<(AccountId, u32)>> {
+        fn reporte_resultado(&self, eleccion_id: u32) -> Result<DataResultado> {
             if !self.caller_is_reporte() {
                 return Err(VotacionError::SoloReportes);
             }
@@ -817,30 +820,71 @@ mod votacion {
         }       
     }
 
+    #[ink::scale_derive(Decode, Encode, TypeInfo)]
+    pub struct DataRegistroVotantes {
+        votantes: u32
+    }
+
+    impl DataRegistroVotantes {
+        fn new(votantes: u32) -> DataRegistroVotantes {
+            DataRegistroVotantes{
+                votantes
+            }
+        }
+    }
+
+    #[ink::scale_derive(Decode, Encode, TypeInfo)]
+    pub struct DataParticipacion {
+        votos: u32,
+        participacion: u128
+    }
+
+    impl DataParticipacion {
+        fn new(votos: u32, participacion: u128) -> DataParticipacion {
+            DataParticipacion{
+                votos,
+                participacion
+            }
+        }
+    }
+
+    #[ink::scale_derive(Decode, Encode, TypeInfo)]
+    pub struct DataResultado {
+        resultado: Vec<(AccountId, u32)>
+    }
+
+    impl DataResultado {
+        fn new(resultado: Vec<(AccountId, u32)>) -> DataResultado {
+            DataResultado {
+                resultado
+            }
+        }
+    }
+
     #[ink::trait_definition]
     pub trait ReportMessage {
         /// Reporte de registro de votantes para una elección específica
         #[ink(message)]
-        fn reporte_registro_votantes(&self, eleccion_id: u32) -> Result<u32>;
+        fn reporte_registro_votantes(&self, eleccion_id: u32) -> Result<DataRegistroVotantes>;
     
         /// Reporte de participación para una elección cerrada
         #[ink(message)]
-        fn reporte_participacion(&self, eleccion_id: u32) -> Result<(u32, u128)>;
+        fn reporte_participacion(&self, eleccion_id: u32) -> Result<DataParticipacion>;
     
         /// Reporte de resultados finales de una elección cerrada
         #[ink(message)]
-        fn reporte_resultado(&self, eleccion_id: u32) -> Result<Vec<(AccountId, u32)>>;
+        fn reporte_resultado(&self, eleccion_id: u32) -> Result<DataResultado>;
     }
 
     trait ReportMessageEleccion {
         /// Reporte de registro de votantes
-        fn reporte_registro_votantes(&self) -> u32;
+        fn reporte_registro_votantes(&self) -> DataRegistroVotantes;
     
         /// Reporte de participación
-        fn reporte_participacion(&self, current_time: &Fecha) -> Result<(u32, u128)>;
+        fn reporte_participacion(&self, current_time: &Fecha) -> Result<DataParticipacion>;
     
         /// Reporte de resultados finales
-        fn reporte_resultado(&self, current_time: &Fecha) -> Result<Vec<(AccountId, u32)>>;
+        fn reporte_resultado(&self, current_time: &Fecha) -> Result<DataResultado>;
     }
 
     #[cfg(test)]
