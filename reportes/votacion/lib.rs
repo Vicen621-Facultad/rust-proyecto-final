@@ -3,7 +3,10 @@
 pub use self::votacion::{
     Votacion,
     VotacionRef,
-    ReportMessage
+    ReportMessage,
+    DataParticipacion,
+    DataRegistroVotantes,
+    DataResultado
 };
 pub use self::errors::VotacionError;
 
@@ -406,11 +409,12 @@ mod votacion {
 
     //TODO: Hacer test de esta implementacion
     impl ReportMessageEleccion for Eleccion {
-        fn reporte_registro_votantes(&self) -> u32 {
-            self.get_cant_votantes()
+        /// Devuelve un listado de los id de los votantes aprobados
+        fn reporte_registro_votantes(&self) -> Vec<AccountId> {
+            self.votantes.clone()
         }
 
-        fn reporte_participacion(&self, current_time: &Fecha) -> Result<(u32, u128)> {
+        fn reporte_participacion(&self, current_time: &Fecha) -> Result<DataParticipacion> {
             if !self.get_finalizada(current_time) {
                 return Err(VotacionError::EleccionNoFinalizada);
             }
@@ -419,15 +423,15 @@ mod votacion {
             let num_votantes_voto = self.votantes_voto.len() as u128;
 
             if num_votantes == 0 {
-                return Ok((0, 0));
+                return Ok(DataParticipacion::new(0,0));
             }
 
-            let participacion = (num_votantes_voto / num_votantes ) * 100;
+            let participacion = (num_votantes_voto * 100) / num_votantes;
 
-            Ok((num_votantes_voto as u32, participacion))
+            Ok(DataParticipacion::new(num_votantes_voto as u32, participacion))
         }
 
-        fn reporte_resultado(&self, current_time: &Fecha) -> Result<Vec<(AccountId, u32)>> {
+        fn reporte_resultado(&self, current_time: &Fecha) -> Result<DataResultado> {
             if !self.get_finalizada(current_time) {
                 return Err(VotacionError::EleccionNoFinalizada);
             }
@@ -435,7 +439,7 @@ mod votacion {
             let mut resultados = self.votos.clone();
             resultados.sort_by_key(|(_, voto)| *voto);
     
-            Ok(resultados)
+            Ok(DataResultado::new(resultados))
         }
     }
 
@@ -782,18 +786,25 @@ mod votacion {
     //TODO: Hacer test de esta implementacion
     impl ReportMessage for Votacion {
         #[ink(message)]
-        fn reporte_registro_votantes(&self, eleccion_id: u32) -> Result<u32> {
+        fn reporte_registro_votantes(&self, eleccion_id: u32) -> Result<DataRegistroVotantes> {
             if !self.caller_is_reporte() {
                 return Err(VotacionError::SoloReportes);
             }
 
             let eleccion = self.get_eleccion(eleccion_id).ok_or(VotacionError::EleccionNoEncontrada)?;
-            
-            Ok(eleccion.reporte_registro_votantes())
+            let id_votantes = eleccion.reporte_registro_votantes(); // -> AccountId de votantes aceptados y aprobados para esa eleccion
+            let mut usuarios_votantes = Vec::new();
+            //Itero sobre los id de los votantes para recuperar su usuario en el sistema y devolverlo en el reporte
+            //Jamas deberia dar error el get_usuario(id) debido a que se verifica siempre que sean usuarios
+            //aceptados aquellos que se los acepte como votantes y los candidadtos
+            for id in id_votantes {
+                usuarios_votantes.push(self.get_usuario(id)?);
+            } 
+            Ok(DataRegistroVotantes::new(usuarios_votantes))
         }
 
         #[ink(message)]
-        fn reporte_participacion(&self, eleccion_id: u32) -> Result<(u32, u128)> {
+        fn reporte_participacion(&self, eleccion_id: u32) -> Result<DataParticipacion> {
             if !self.caller_is_reporte() {
                 return Err(VotacionError::SoloReportes);
             }
@@ -805,7 +816,7 @@ mod votacion {
         }
 
         #[ink(message)]
-        fn reporte_resultado(&self, eleccion_id: u32) -> Result<Vec<(AccountId, u32)>> {
+        fn reporte_resultado(&self, eleccion_id: u32) -> Result<DataResultado> {
             if !self.caller_is_reporte() {
                 return Err(VotacionError::SoloReportes);
             }
@@ -817,47 +828,163 @@ mod votacion {
         }       
     }
 
+    #[ink::scale_derive(Decode, Encode, TypeInfo)]
+    pub struct DataRegistroVotantes {
+        votantes: Vec<Usuario>
+    }
+
+    impl DataRegistroVotantes {
+        fn new(votantes: Vec<Usuario>) -> DataRegistroVotantes {
+            DataRegistroVotantes{
+                votantes
+            }
+        }
+    }
+
+    #[ink::scale_derive(Decode, Encode, TypeInfo)]
+    pub struct DataParticipacion {
+        votos: u32,
+        participacion: u128
+    }
+
+    impl DataParticipacion {
+        fn new(votos: u32, participacion: u128) -> DataParticipacion {
+            DataParticipacion{
+                votos,
+                participacion
+            }
+        }
+    }
+
+    #[ink::scale_derive(Decode, Encode, TypeInfo)]
+    pub struct DataResultado {
+        resultado: Vec<(AccountId, u32)>
+    }
+
+    impl DataResultado {
+        fn new(resultado: Vec<(AccountId, u32)>) -> DataResultado {
+            DataResultado {
+                resultado
+            }
+        }
+    }
+
     #[ink::trait_definition]
     pub trait ReportMessage {
         /// Reporte de registro de votantes para una elección específica
         #[ink(message)]
-        fn reporte_registro_votantes(&self, eleccion_id: u32) -> Result<u32>;
+        fn reporte_registro_votantes(&self, eleccion_id: u32) -> Result<DataRegistroVotantes>;
     
         /// Reporte de participación para una elección cerrada
         #[ink(message)]
-        fn reporte_participacion(&self, eleccion_id: u32) -> Result<(u32, u128)>;
+        fn reporte_participacion(&self, eleccion_id: u32) -> Result<DataParticipacion>;
     
         /// Reporte de resultados finales de una elección cerrada
         #[ink(message)]
-        fn reporte_resultado(&self, eleccion_id: u32) -> Result<Vec<(AccountId, u32)>>;
+        fn reporte_resultado(&self, eleccion_id: u32) -> Result<DataResultado>;
     }
 
     trait ReportMessageEleccion {
         /// Reporte de registro de votantes
-        fn reporte_registro_votantes(&self) -> u32;
+        fn reporte_registro_votantes(&self) -> Vec<AccountId>;
     
         /// Reporte de participación
-        fn reporte_participacion(&self, current_time: &Fecha) -> Result<(u32, u128)>;
+        fn reporte_participacion(&self, current_time: &Fecha) -> Result<DataParticipacion>;
     
         /// Reporte de resultados finales
-        fn reporte_resultado(&self, current_time: &Fecha) -> Result<Vec<(AccountId, u32)>>;
+        fn reporte_resultado(&self, current_time: &Fecha) -> Result<DataResultado>;
     }
 
     #[cfg(test)]
-    mod tests {
+    pub mod tests {
         use super::*;
         use chrono::{NaiveDate, NaiveDateTime};
         use ink::env::{test::{default_accounts, set_block_timestamp, set_caller}, DefaultEnvironment};
 
         /// Funcion de ayuda en los test le pasas un dia, mes y año
         /// te devuelve el timestamp de esa fecha en milisegundos
-        fn create_date(day: u32, month: u32, year: i32) -> Timestamp {
+        pub fn create_date(day: u32, month: u32, year: i32) -> Timestamp {
             let date = NaiveDate::from_ymd_opt(year, month, day).expect("Fecha inválida");
             // Convertir la fecha a NaiveDateTime agregando tiempo (00:00:00)
             let datetime = NaiveDateTime::new(date, chrono::NaiveTime::from_hms_opt(0, 0, 0).unwrap());
             // Obtener el timestamp
             (datetime.and_utc().timestamp() * 1000) as u64
         }
+
+        /// Funcion auxiliar para los tests de reportes.
+        pub fn default_with_data() -> Votacion {
+            let accounts = default_accounts::<DefaultEnvironment>();
+            set_caller::<DefaultEnvironment>(accounts.frank);
+            let mut votacion = Votacion::default();
+            //Creo dos elecciones nuevas (admin)
+            votacion.crear_eleccion(Fecha::new(1, 1, 2024), Fecha::new(31, 12, 2024)).unwrap();
+            votacion.crear_eleccion(Fecha::new(1, 1, 2024), Fecha::new(31, 12, 2024)).unwrap();
+            //Agrego usuarios a la lista de usuarios_por_aceptar
+            set_caller::<DefaultEnvironment>(accounts.alice);
+            votacion.crear_usuario("Alice".to_string(), "Cooper".to_string(), "EEUU".to_string(), "111".to_string(), 30).unwrap();
+            set_caller::<DefaultEnvironment>(accounts.bob);
+            votacion.crear_usuario("Bob".to_string(), "Marley".to_string(), "Jamaica".to_string(), "222".to_string(), 30).unwrap();
+            set_caller::<DefaultEnvironment>(accounts.charlie);
+            votacion.crear_usuario("Charlie".to_string(), "Chaplin".to_string(), "Inglaterra".to_string(), "333".to_string(), 30).unwrap();
+            set_caller::<DefaultEnvironment>(accounts.django);
+            votacion.crear_usuario("Django".to_string(), "Unchained".to_string(), "EEUU".to_string(), "444".to_string(), 30).unwrap();
+            //Acepto a los usuarios (admin)
+            set_caller::<DefaultEnvironment>(accounts.frank);
+            votacion.aceptar_usuario(accounts.alice).unwrap();
+            votacion.aceptar_usuario(accounts.bob).unwrap();
+            votacion.aceptar_usuario(accounts.charlie).unwrap();
+            votacion.aceptar_usuario(accounts.django).unwrap();
+            //Eleccion id = 0:
+            //Postulo a alice y a bob como y candidatos a la eleccion
+            set_caller::<DefaultEnvironment>(accounts.alice);
+            votacion.postular_candidato(0).unwrap();
+            set_caller::<DefaultEnvironment>(accounts.bob);
+            votacion.postular_candidato(0).unwrap();
+            //Postulo a charlie y a django como y votantes a la eleccion
+            set_caller::<DefaultEnvironment>(accounts.charlie);
+            votacion.postular_votante(0).unwrap();
+            set_caller::<DefaultEnvironment>(accounts.django);
+            votacion.postular_votante(0).unwrap();
+            //Acepto a los votantes y candidatos postulados (admin)
+            set_caller::<DefaultEnvironment>(accounts.frank);
+            votacion.agregar_candidato(0, accounts.alice).unwrap();
+            votacion.agregar_candidato(0, accounts.bob).unwrap();
+            votacion.agregar_votante(0, accounts.charlie).unwrap();
+            votacion.agregar_votante(0, accounts.django).unwrap();
+
+            //Eleccion id = 1
+            //Postulo a alice como candidato a la eleccion    
+            set_caller::<DefaultEnvironment>(accounts.alice);
+            votacion.postular_candidato(1).unwrap();
+            //Postulo a bob, charlie, y django como votantes de la eleccion
+            set_caller::<DefaultEnvironment>(accounts.charlie);
+            votacion.postular_votante(1).unwrap();
+            set_caller::<DefaultEnvironment>(accounts.django);
+            votacion.postular_votante(1).unwrap();
+            set_caller::<DefaultEnvironment>(accounts.bob);
+            votacion.postular_votante(1).unwrap();
+            //Acepto a los votantes y candidatos postulados (admin)
+            set_caller::<DefaultEnvironment>(accounts.frank);
+            votacion.agregar_candidato(1, accounts.alice).unwrap();
+            votacion.agregar_votante(1, accounts.bob).unwrap();
+            votacion.agregar_votante(1, accounts.charlie).unwrap();
+            votacion.agregar_votante(1, accounts.django).unwrap();
+            //Realizo votos para eleccion 0 (alice = 2, bob = 0)
+            set_block_timestamp::<DefaultEnvironment>(create_date(15, 6, 2024));
+            set_caller::<DefaultEnvironment>(accounts.django);
+            votacion.votar(0, accounts.alice).unwrap();
+            set_caller::<DefaultEnvironment>(accounts.charlie);
+            votacion.votar(0, accounts.alice).unwrap();
+            //Realizo votos para eleccion 0 (alice = 2)
+            set_block_timestamp::<DefaultEnvironment>(create_date(15, 6, 2024));
+            set_caller::<DefaultEnvironment>(accounts.django);
+            votacion.votar(1, accounts.alice).unwrap();
+            set_caller::<DefaultEnvironment>(accounts.bob);
+            votacion.votar(1, accounts.alice).unwrap();
+
+            votacion
+        }
+        
 
         #[ink::test]
         fn test_set_admin() {
@@ -1914,7 +2041,45 @@ mod votacion {
         }
 
         // tests de ReportMessage
-    
+        #[ink::test]
+        fn test_reporte_registro_votantes() {
+            let id_reporte = AccountId::from([0x10; 32]);
+            let votacion = default_with_data(); //Eleccion de id = 0: 2 votantes aprobados/ eleccion de id = 1: 3 votantes aprobados
+            let accounts = default_accounts::<DefaultEnvironment>();
+            set_caller::<DefaultEnvironment>(id_reporte);
+            set_block_timestamp::<DefaultEnvironment>(create_date(1, 1, 2026));
+            let reporte = votacion.reporte_registro_votantes(0).unwrap();
+            assert_eq!(reporte.votantes.get(0).unwrap().get_addres(), accounts.charlie);
+            assert_eq!(reporte.votantes.get(1).unwrap().get_addres(), accounts.django);
+        }
+
+        #[ink::test]
+        fn test_reporte_participacion() {
+            let id_reporte = AccountId::from([0x10; 32]);
+            let votacion = default_with_data(); //Eleccion de id = 0: 2 votantes aprobados/ eleccion de id = 1: 3 votantes aprobados
+            let accounts = default_accounts::<DefaultEnvironment>();
+            set_caller::<DefaultEnvironment>(id_reporte);
+            set_block_timestamp::<DefaultEnvironment>(create_date(1, 1, 2026));
+            let reporte = votacion.reporte_participacion(0).unwrap();
+            assert_eq!(reporte.votos, 2);
+            assert_eq!(reporte.participacion, 100);
+        }
+
+        #[ink::test]
+        fn test_reporte_resultado() {
+            let id_reporte = AccountId::from([0x10; 32]);
+            let votacion = default_with_data(); //Eleccion de id = 0: Alice = 2 votos y Bob = 0 votos
+            let accounts = default_accounts::<DefaultEnvironment>();
+            set_caller::<DefaultEnvironment>(id_reporte);
+            set_block_timestamp::<DefaultEnvironment>(create_date(1, 1, 2026));
+            let mut reporte = votacion.reporte_resultado(0).unwrap();
+            let primero = reporte.resultado.pop().unwrap();
+            let segundo = reporte.resultado.pop().unwrap();
+            assert_eq!(primero.0, accounts.alice);
+            assert_eq!(primero.1, 2);
+            assert_eq!(segundo.0, accounts.bob);
+            assert_eq!(segundo.1, 0);
+        }
     
         // tests de ReportMessageEleccion
     }

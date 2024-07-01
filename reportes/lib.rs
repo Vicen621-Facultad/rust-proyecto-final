@@ -12,6 +12,7 @@ mod reportes {
     use votacion::VotacionRef;
     use votacion::VotacionError;
     use votacion::ReportMessage;
+    use votacion::{DataParticipacion, DataRegistroVotantes, DataResultado};
     use ink::prelude::vec::Vec;
     type Result<T> = core::result::Result<T, VotacionError>;
 
@@ -29,24 +30,24 @@ mod reportes {
 
     impl ReportMessage for Reportes {
         #[ink(message)]
-        fn reporte_registro_votantes(&self, eleccion_id: u32) -> Result<u32> {
+        fn reporte_registro_votantes(&self, eleccion_id: u32) -> Result<DataRegistroVotantes> {
             self.votacion.reporte_registro_votantes(eleccion_id)
         }
 
         #[ink(message)]
-        fn reporte_participacion(&self, eleccion_id: u32) -> Result<(u32, u128)> {
+        fn reporte_participacion(&self, eleccion_id: u32) -> Result<DataParticipacion> {
             self.votacion.reporte_participacion(eleccion_id)
         }
 
         #[ink(message)]
-        fn reporte_resultado(&self, eleccion_id: u32) -> Result<Vec<(AccountId, u32)>> {
+        fn reporte_resultado(&self, eleccion_id: u32) -> Result<DataResultado> {
             self.votacion.reporte_resultado(eleccion_id)
         }
     }
 
     #[cfg(test)]
     mod tests {
-        use super::*;
+        //use super::*;
         //TODO: Hacer tests
     }
 }
