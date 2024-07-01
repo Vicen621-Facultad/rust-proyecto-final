@@ -426,7 +426,7 @@ mod votacion {
                 return Ok(DataParticipacion::new(0,0));
             }
 
-            let participacion = (num_votantes_voto / num_votantes ) * 100;
+            let participacion = (num_votantes_voto * 100) / num_votantes;
 
             Ok(DataParticipacion::new(num_votantes_voto as u32, participacion))
         }
@@ -2050,6 +2050,35 @@ mod votacion {
             set_block_timestamp::<DefaultEnvironment>(create_date(1, 1, 2026));
             let reporte = votacion.reporte_registro_votantes(0).unwrap();
             assert_eq!(reporte.votantes.get(0).unwrap().get_addres(), accounts.charlie);
+            assert_eq!(reporte.votantes.get(1).unwrap().get_addres(), accounts.django);
+        }
+
+        #[ink::test]
+        fn test_reporte_participacion() {
+            let id_reporte = AccountId::from([0x10; 32]);
+            let votacion = default_with_data(); //Eleccion de id = 0: 2 votantes aprobados/ eleccion de id = 1: 3 votantes aprobados
+            let accounts = default_accounts::<DefaultEnvironment>();
+            set_caller::<DefaultEnvironment>(id_reporte);
+            set_block_timestamp::<DefaultEnvironment>(create_date(1, 1, 2026));
+            let reporte = votacion.reporte_participacion(0).unwrap();
+            assert_eq!(reporte.votos, 2);
+            assert_eq!(reporte.participacion, 100);
+        }
+
+        #[ink::test]
+        fn test_reporte_resultado() {
+            let id_reporte = AccountId::from([0x10; 32]);
+            let votacion = default_with_data(); //Eleccion de id = 0: Alice = 2 votos y Bob = 0 votos
+            let accounts = default_accounts::<DefaultEnvironment>();
+            set_caller::<DefaultEnvironment>(id_reporte);
+            set_block_timestamp::<DefaultEnvironment>(create_date(1, 1, 2026));
+            let mut reporte = votacion.reporte_resultado(0).unwrap();
+            let primero = reporte.resultado.pop().unwrap();
+            let segundo = reporte.resultado.pop().unwrap();
+            assert_eq!(primero.0, accounts.alice);
+            assert_eq!(primero.1, 2);
+            assert_eq!(segundo.0, accounts.bob);
+            assert_eq!(segundo.1, 0);
         }
     
         // tests de ReportMessageEleccion
