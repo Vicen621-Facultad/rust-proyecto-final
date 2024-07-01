@@ -4,9 +4,7 @@ pub use self::votacion::{
     Votacion,
     VotacionRef,
     ReportMessage,
-    DataParticipacion,
-    DataRegistroVotantes,
-    DataResultado
+    Usuario
 };
 pub use self::errors::VotacionError;
 
@@ -414,7 +412,7 @@ mod votacion {
             self.votantes.clone()
         }
 
-        fn reporte_participacion(&self, current_time: &Fecha) -> Result<DataParticipacion> {
+        fn reporte_participacion(&self, current_time: &Fecha) -> Result<(u32, u128)> {
             if !self.get_finalizada(current_time) {
                 return Err(VotacionError::EleccionNoFinalizada);
             }
@@ -423,15 +421,15 @@ mod votacion {
             let num_votantes_voto = self.votantes_voto.len() as u128;
 
             if num_votantes == 0 {
-                return Ok(DataParticipacion::new(0,0));
+                return Ok((0,0));
             }
 
             let participacion = (num_votantes_voto * 100) / num_votantes;
 
-            Ok(DataParticipacion::new(num_votantes_voto as u32, participacion))
+            Ok((num_votantes_voto as u32, participacion))
         }
 
-        fn reporte_resultado(&self, current_time: &Fecha) -> Result<DataResultado> {
+        fn reporte_resultado(&self, current_time: &Fecha) -> Result<Vec<(AccountId, u32)>> {
             if !self.get_finalizada(current_time) {
                 return Err(VotacionError::EleccionNoFinalizada);
             }
@@ -439,7 +437,7 @@ mod votacion {
             let mut resultados = self.votos.clone();
             resultados.sort_by_key(|(_, voto)| *voto);
     
-            Ok(DataResultado::new(resultados))
+            Ok(resultados)
         }
     }
 
@@ -786,7 +784,7 @@ mod votacion {
     //TODO: Hacer test de esta implementacion
     impl ReportMessage for Votacion {
         #[ink(message)]
-        fn reporte_registro_votantes(&self, eleccion_id: u32) -> Result<DataRegistroVotantes> {
+        fn reporte_registro_votantes(&self, eleccion_id: u32) -> Result<Vec<Usuario>> {
             if !self.caller_is_reporte() {
                 return Err(VotacionError::SoloReportes);
             }
@@ -794,17 +792,19 @@ mod votacion {
             let eleccion = self.get_eleccion(eleccion_id).ok_or(VotacionError::EleccionNoEncontrada)?;
             let id_votantes = eleccion.reporte_registro_votantes(); // -> AccountId de votantes aceptados y aprobados para esa eleccion
             let mut usuarios_votantes = Vec::new();
+
             //Itero sobre los id de los votantes para recuperar su usuario en el sistema y devolverlo en el reporte
             //Jamas deberia dar error el get_usuario(id) debido a que se verifica siempre que sean usuarios
             //aceptados aquellos que se los acepte como votantes y los candidadtos
             for id in id_votantes {
                 usuarios_votantes.push(self.get_usuario(id)?);
-            } 
-            Ok(DataRegistroVotantes::new(usuarios_votantes))
+            }
+
+            Ok(usuarios_votantes)
         }
 
         #[ink(message)]
-        fn reporte_participacion(&self, eleccion_id: u32) -> Result<DataParticipacion> {
+        fn reporte_participacion(&self, eleccion_id: u32) -> Result<(u32, u128)> {
             if !self.caller_is_reporte() {
                 return Err(VotacionError::SoloReportes);
             }
@@ -816,7 +816,7 @@ mod votacion {
         }
 
         #[ink(message)]
-        fn reporte_resultado(&self, eleccion_id: u32) -> Result<DataResultado> {
+        fn reporte_resultado(&self, eleccion_id: u32) -> Result<Vec<(AccountId, u32)>> {
             if !self.caller_is_reporte() {
                 return Err(VotacionError::SoloReportes);
             }
@@ -828,60 +828,19 @@ mod votacion {
         }       
     }
 
-    #[ink::scale_derive(Decode, Encode, TypeInfo)]
-    pub struct DataRegistroVotantes {
-        votantes: Vec<Usuario>
-    }
-
-    impl DataRegistroVotantes {
-        fn new(votantes: Vec<Usuario>) -> DataRegistroVotantes {
-            DataRegistroVotantes{
-                votantes
-            }
-        }
-    }
-
-    #[ink::scale_derive(Decode, Encode, TypeInfo)]
-    pub struct DataParticipacion {
-        votos: u32,
-        participacion: u128
-    }
-
-    impl DataParticipacion {
-        fn new(votos: u32, participacion: u128) -> DataParticipacion {
-            DataParticipacion{
-                votos,
-                participacion
-            }
-        }
-    }
-
-    #[ink::scale_derive(Decode, Encode, TypeInfo)]
-    pub struct DataResultado {
-        resultado: Vec<(AccountId, u32)>
-    }
-
-    impl DataResultado {
-        fn new(resultado: Vec<(AccountId, u32)>) -> DataResultado {
-            DataResultado {
-                resultado
-            }
-        }
-    }
-
     #[ink::trait_definition]
     pub trait ReportMessage {
         /// Reporte de registro de votantes para una elección específica
         #[ink(message)]
-        fn reporte_registro_votantes(&self, eleccion_id: u32) -> Result<DataRegistroVotantes>;
+        fn reporte_registro_votantes(&self, eleccion_id: u32) -> Result<Vec<Usuario>>;
     
         /// Reporte de participación para una elección cerrada
         #[ink(message)]
-        fn reporte_participacion(&self, eleccion_id: u32) -> Result<DataParticipacion>;
+        fn reporte_participacion(&self, eleccion_id: u32) -> Result<(u32, u128)>;
     
         /// Reporte de resultados finales de una elección cerrada
         #[ink(message)]
-        fn reporte_resultado(&self, eleccion_id: u32) -> Result<DataResultado>;
+        fn reporte_resultado(&self, eleccion_id: u32) -> Result<Vec<(AccountId, u32)>>;
     }
 
     trait ReportMessageEleccion {
@@ -889,10 +848,10 @@ mod votacion {
         fn reporte_registro_votantes(&self) -> Vec<AccountId>;
     
         /// Reporte de participación
-        fn reporte_participacion(&self, current_time: &Fecha) -> Result<DataParticipacion>;
+        fn reporte_participacion(&self, current_time: &Fecha) -> Result<(u32, u128)>;
     
         /// Reporte de resultados finales
-        fn reporte_resultado(&self, current_time: &Fecha) -> Result<DataResultado>;
+        fn reporte_resultado(&self, current_time: &Fecha) -> Result<Vec<(AccountId, u32)>>;
     }
 
     #[cfg(test)]
@@ -2086,7 +2045,7 @@ mod votacion {
 }
 
 mod fecha {
-    use chrono::{DateTime, Datelike, FixedOffset, NaiveDate, NaiveDateTime, NaiveTime, TimeZone, Timelike};
+    use chrono::{DateTime, Datelike, NaiveDate, NaiveDateTime, NaiveTime, Timelike};
 
     #[derive(Debug, Clone, PartialEq, Default)]
     #[ink::scale_derive(Encode, Decode, TypeInfo)]
