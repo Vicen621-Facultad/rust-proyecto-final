@@ -4,11 +4,11 @@ pub use self::votacion::{
     Votacion,
     VotacionRef,
     ReportMessage,
+    UserManager,
     Usuario
 };
 pub use self::errors::VotacionError;
 
-//TODO: pasar a usar una fecha y crearla con dia mes y año, hacer funcion para pasar de fecha a timestamp
 #[ink::contract]
 mod votacion {
     use crate::errors::VotacionError;
@@ -61,8 +61,6 @@ mod votacion {
         fn is_votante(&self, id: &AccountId) -> bool;
         /// Dado un id , devuelve true si esta registrado como candidato en la eleccion
         fn is_candidato(&self, id: &AccountId) -> bool;
-        //Devuelve la cantidad de votantes
-        fn get_cant_votantes(&self) -> u32;
         /// Devuelve la fecha de inicio de la elección
         fn get_fecha_inicio(&self) -> Fecha;
         /// Devuelve la fecha de fin de la elección
@@ -154,10 +152,10 @@ mod votacion {
         fn get_inicio(&self, current_time: &Fecha) -> bool;
         /// Devuelve si la elección ya finalizó
         fn get_finalizada(&self, current_time: &Fecha) -> bool;
-        /// Devuelve los votos de un candidato
+        /// Devuelve la cantidad de votos para un candidato dado
         fn get_votos_candidato(&self, id_candidato: &AccountId, current_time: &Fecha) -> Result<u32>;
         /// Devuelve los votos de todos los candidatos, almacenados por id
-        fn get_votos(&self, current_time: &Fecha) -> Result< Vec<(AccountId, u32)> >;
+        fn get_votos(&self, current_time: &Fecha) -> Result<Vec<(AccountId, u32)>>;
     }
     
     #[ink::trait_definition]
@@ -250,10 +248,6 @@ mod votacion {
                 return Err(VotacionError::EleccionYaIniciada);
             }
 
-            if !self.is_postulado_candidato(&id_candidato) {
-                return Err(VotacionError::UsuarioNoPostuladoCandidato);
-            }
-
             if self.is_candidato(&id_candidato) {
                 return Err(VotacionError::UsuarioEsCandidato);
             }
@@ -280,10 +274,6 @@ mod votacion {
 
             if self.get_inicio(current_time) {
                 return Err(VotacionError::EleccionYaIniciada);
-            }
-
-            if !self.is_postulado_votante(&id_votante) {
-                return Err(VotacionError::UsuarioNoPostuladoVotante);
             }
 
             if self.is_votante(&id_votante) {
@@ -373,46 +363,49 @@ mod votacion {
     }
 
     impl GettersEleccion for Eleccion {
+        /// Devuelve el id de la elección
         fn get_id(&self) -> u32 {
             self.id
         }
 
+        /// Devuelve true si el id esta postulado como candidato
         fn is_postulado_candidato(&self, id: &AccountId) -> bool {
             self.candidatos_sin_aceptar.iter().any(|candidato| candidato == id)
         }
 
+        /// Devuelve true si el id esta postulado como votante
         fn is_postulado_votante(&self, id: &AccountId) -> bool {
             self.votantes_sin_aceptar.iter().any(|votante| votante == id)
         }
 
+        /// Dado un id , devuelve true si esta registrado como votante en la eleccion
         fn is_votante(&self, id: &AccountId) -> bool {
             self.votantes.iter().any(|votante| votante == id)
         }
 
+        /// Dado un id , devuelve true si esta registrado como candidato en la eleccion
         fn is_candidato(&self, id: &AccountId) -> bool {
             self.candidatos.iter().any(|candidato| candidato == id)
         }
 
-        fn get_cant_votantes(&self) -> u32 {
-            self.votantes.len() as u32
-        }
+        /// Devuelve la fecha de inicio de la elección
         fn get_fecha_inicio(&self) -> Fecha {
             self.fecha_inicio.clone()
         }
 
+        /// Devuelve la fecha de fin de la elección
         fn get_fecha_fin(&self) -> Fecha {
             self.fecha_fin.clone()
         }
     }
 
-    //TODO: Hacer test de esta implementacion
     impl ReportMessageEleccion for Eleccion {
         /// Devuelve un listado de los id de los votantes aprobados
         fn reporte_registro_votantes(&self) -> Vec<AccountId> {
             self.votantes.clone()
         }
 
-        fn reporte_participacion(&self, current_time: &Fecha) -> Result<(u32, u128)> {
+        fn reporte_participacion(&self, current_time: &Fecha) -> Result<(u128, u128)> {
             if !self.get_finalizada(current_time) {
                 return Err(VotacionError::EleccionNoFinalizada);
             }
@@ -420,23 +413,11 @@ mod votacion {
             let num_votantes = self.votantes.len() as u128;
             let num_votantes_voto = self.votantes_voto.len() as u128;
 
-            if num_votantes == 0 {
-                return Ok((0,0));
-            }
-
-            let participacion = (num_votantes_voto * 100) / num_votantes;
-
-            Ok((num_votantes_voto as u32, participacion))
+            Ok((num_votantes, num_votantes_voto))
         }
 
         fn reporte_resultado(&self, current_time: &Fecha) -> Result<Vec<(AccountId, u32)>> {
-            if !self.get_finalizada(current_time) {
-                return Err(VotacionError::EleccionNoFinalizada);
-            }
-    
-            let mut resultados = self.votos.clone();
-            resultados.sort_by_key(|(_, voto)| *voto);
-    
+            let resultados = self.get_votos(current_time)?;
             Ok(resultados)
         }
     }
@@ -455,32 +436,39 @@ mod votacion {
     }
 
     impl GettersUsuario for Usuario {
+        /// Devuelve el id del usuario
         fn get_addres(&self) -> AccountId {
             self.addres
         }
 
+        /// Devuelve el nombre del usuario
         fn get_nombre(&self) -> String {
             self.nombre.clone()
         }
 
+        /// Devuelve el apellido del usuario
         fn get_apellido(&self) -> String {
             self.apellido.clone()
         }
 
+        /// Devuelve la direccion del usuario
         fn get_direccion(&self) -> String {
             self.direccion.clone()
         }
 
+        /// Devuelve el dni del usuario
         fn get_dni(&self) -> String {
             self.dni.clone()
         }
 
+        /// Devuelve la edad del usuario
         fn get_edad(&self) -> u8 {
             self.edad
         }
     }
 
     impl Votacion {
+        /// Constructor por defecto
         pub fn default() -> Self {
             Self {
                 admin: Self::env().caller(),
@@ -491,6 +479,7 @@ mod votacion {
             }
         }
 
+        /// Constructor del contrato
         #[ink(constructor)]
         pub fn new(reporte: AccountId) -> Self {
             Self {
@@ -531,6 +520,7 @@ mod votacion {
     }
 
     impl EleccionManager for Votacion {
+        /// Crea una elección y la agrega a la lista de elecciones, devuelve su id
         #[ink(message)]
         fn crear_eleccion(&mut self, fecha_inicio: Fecha, fecha_fin: Fecha) -> Result<u32> {
             if !self.caller_is_admin() {
@@ -555,6 +545,7 @@ mod votacion {
             Ok(id)
         }
 
+        /// Devuelve una elección por su ID
         #[ink(message)]
         fn get_eleccion(&self, id: u32) -> Option<Eleccion> {
             self.elecciones.get(id as usize).cloned()
@@ -562,16 +553,19 @@ mod votacion {
     }
 
     impl UserManager for Votacion {
+        /// Devuelve el admin del contrato
         #[ink(message)]
         fn get_admin(&self) -> AccountId {
             self.admin
         }
 
+        /// Devuelve true si el id pasado es el admin del contrato, false en cualquier otro caso
         #[ink(message)]
         fn caller_is_admin(&self) -> bool {
             self.get_admin() == self.env().caller()
         }
 
+        /// Crea un usuario y lo agrega a la lista de usuarios_por_aceptar
         #[ink(message)]
         fn crear_usuario(&mut self, nombre: String, apellido: String, direccion: String, dni: String, edad: u8) -> Result<Usuario> {
             let id = self.env().caller();
@@ -596,6 +590,7 @@ mod votacion {
             Ok(usuario)
         }
 
+        /// Acepta un usuario de la lista usuarios_por_aceptar y lo agrega a la lista de usuarios
         #[ink(message)]
         fn aceptar_usuario(&mut self, id: AccountId) -> Result<()>{
             if !self.caller_is_admin() {
@@ -610,11 +605,13 @@ mod votacion {
             }
         }
 
+        /// Obtiene un usuario sin aceptar por su id
         #[ink(message)]
         fn get_usuario_sin_aceptar(&self, id: AccountId) -> Result<Usuario> {
             self.usuarios_sin_aceptar.iter().find(|usuario| usuario.addres == id).cloned().ok_or(VotacionError::UsuarioSinAceptarNoEncontrado)
         }
 
+        /// Obtiene un usuario por su id
         #[ink(message)]
         fn get_usuario(&self, id: AccountId) -> Result<Usuario> {
             self.usuarios.iter().find(|usuario| usuario.addres == id).cloned().ok_or(VotacionError::UsuarioNoEncontrado)
@@ -622,6 +619,7 @@ mod votacion {
     }
 
     impl EleccionSystemInk for Votacion {
+        /// Dado un id: postula un candidato, si este esta postulado como votante, devolvera error
         #[ink(message)]
         fn postular_candidato(&mut self, id_eleccion: u32) -> Result<()> {
             let usuario_actual = self.env().caller();
@@ -643,6 +641,7 @@ mod votacion {
             }
         }
 
+        /// Dado un id: postula un votante, si este esta postulado como candidato, devolvera error
         #[ink(message)]
         fn postular_votante(&mut self, id_eleccion: u32) -> Result<()> {
             let usuario_actual = self.env().caller();
@@ -664,6 +663,7 @@ mod votacion {
             }
         }
 
+        /// Dado un candidato postulado, es aceptado por el Admin
         #[ink(message)]
         fn agregar_candidato(&mut self, id_eleccion: u32, id_candidato: AccountId) -> Result<()> {
             if !self.caller_is_admin() {
@@ -683,6 +683,7 @@ mod votacion {
             }
         }
 
+        /// Dado un votante postulado, es aceptado por el Admin
         #[ink(message)]
         fn agregar_votante(&mut self, id_eleccion: u32, id_votante: AccountId) -> Result<()> {
             if !self.caller_is_admin() {
@@ -702,6 +703,7 @@ mod votacion {
             }
         }
 
+        /// Vota por un candidato en una eleccion
         #[ink(message)]
         fn votar(&mut self, id_eleccion: u32, id_candidato: AccountId) -> Result<()> {
             let caller = self.env().caller();
@@ -718,6 +720,7 @@ mod votacion {
             }
         }
 
+        /// Devuelve true si el usuario ya voto, false en cualquier otro caso
         #[ink(message)]
         fn ya_voto(&self, id_eleccion: u32, id_votante: AccountId) -> Result<bool> {
             if !self.caller_is_admin() {
@@ -735,6 +738,7 @@ mod votacion {
             }
         }
 
+        /// Devuelve si la elección ya inició
         #[ink(message)]
         fn get_iniciada(&self, id_eleccion: u32) -> Result<bool> {
             if !self.caller_is_admin() {
@@ -750,6 +754,7 @@ mod votacion {
             }
         }
 
+        /// Devuelve si la elección ya finalizó
         #[ink(message)]
         fn get_finalizada(&self, id_eleccion: u32) -> Result<bool> {
             if !self.caller_is_admin() {
@@ -765,6 +770,7 @@ mod votacion {
             }
         }
 
+        /// Devuelve los votos de un candidato
         #[ink(message)]
         fn get_votos_candidato(&self, id_eleccion: u32, id_candidato: AccountId) -> Result<u32> {
             if !self.caller_is_admin() {
@@ -781,30 +787,23 @@ mod votacion {
         }
     }
 
-    //TODO: Hacer test de esta implementacion
     impl ReportMessage for Votacion {
+        /// Devuelve un vector con los id de los votantes aceptados
         #[ink(message)]
-        fn reporte_registro_votantes(&self, eleccion_id: u32) -> Result<Vec<Usuario>> {
+        fn reporte_registro_votantes(&self, eleccion_id: u32) -> Result<Vec<AccountId>> {
             if !self.caller_is_reporte() {
                 return Err(VotacionError::SoloReportes);
             }
 
             let eleccion = self.get_eleccion(eleccion_id).ok_or(VotacionError::EleccionNoEncontrada)?;
             let id_votantes = eleccion.reporte_registro_votantes(); // -> AccountId de votantes aceptados y aprobados para esa eleccion
-            let mut usuarios_votantes = Vec::new();
-
-            //Itero sobre los id de los votantes para recuperar su usuario en el sistema y devolverlo en el reporte
-            //Jamas deberia dar error el get_usuario(id) debido a que se verifica siempre que sean usuarios
-            //aceptados aquellos que se los acepte como votantes y los candidadtos
-            for id in id_votantes {
-                usuarios_votantes.push(self.get_usuario(id)?);
-            }
-
-            Ok(usuarios_votantes)
+            
+            Ok(id_votantes)
         }
 
+        /// Devuelve un tuple que contiene la cantidad de votantes y la cantidad de votantes que votaron, en ese orden
         #[ink(message)]
-        fn reporte_participacion(&self, eleccion_id: u32) -> Result<(u32, u128)> {
+        fn reporte_participacion(&self, eleccion_id: u32) -> Result<(u128, u128)> {
             if !self.caller_is_reporte() {
                 return Err(VotacionError::SoloReportes);
             }
@@ -815,6 +814,7 @@ mod votacion {
             eleccion.reporte_participacion(&Fecha::from_timestamp(timestamp))
         }
 
+        /// Devuelve un vector que contiene para cada posicion el AccountID de un candidato y la cantidad de votos que obtuvo
         #[ink(message)]
         fn reporte_resultado(&self, eleccion_id: u32) -> Result<Vec<(AccountId, u32)>> {
             if !self.caller_is_reporte() {
@@ -832,11 +832,11 @@ mod votacion {
     pub trait ReportMessage {
         /// Reporte de registro de votantes para una elección específica
         #[ink(message)]
-        fn reporte_registro_votantes(&self, eleccion_id: u32) -> Result<Vec<Usuario>>;
+        fn reporte_registro_votantes(&self, eleccion_id: u32) -> Result<Vec<AccountId>>;
     
         /// Reporte de participación para una elección cerrada
         #[ink(message)]
-        fn reporte_participacion(&self, eleccion_id: u32) -> Result<(u32, u128)>;
+        fn reporte_participacion(&self, eleccion_id: u32) -> Result<(u128, u128)>;
     
         /// Reporte de resultados finales de una elección cerrada
         #[ink(message)]
@@ -848,7 +848,7 @@ mod votacion {
         fn reporte_registro_votantes(&self) -> Vec<AccountId>;
     
         /// Reporte de participación
-        fn reporte_participacion(&self, current_time: &Fecha) -> Result<(u32, u128)>;
+        fn reporte_participacion(&self, current_time: &Fecha) -> Result<(u128, u128)>;
     
         /// Reporte de resultados finales
         fn reporte_resultado(&self, current_time: &Fecha) -> Result<Vec<(AccountId, u32)>>;
@@ -1999,6 +1999,105 @@ mod votacion {
             assert_eq!(votacion.get_finalizada(0), Err(VotacionError::EleccionNoEncontrada));
         }
 
+        #[ink::test]
+        fn test_reporte_registro_votantes_eleccion() {
+            let accounts = default_accounts::<DefaultEnvironment>();
+            let eleccion = Eleccion {
+                id: 0,
+                fecha_inicio: Fecha::new(1, 1, 2024),
+                fecha_fin: Fecha::new(31, 12, 2024),
+                votantes_sin_aceptar: Vec::new(),
+                votantes: vec![accounts.alice, accounts.bob, accounts.charlie],
+                candidatos_sin_aceptar: Vec::new(),
+                candidatos: Vec::new(),
+                votos: Vec::new(),
+                votantes_voto: Vec::new()
+            };
+
+            let votantes = eleccion.reporte_registro_votantes();
+            assert_eq!(votantes.len(), 3);
+            assert_eq!(votantes.get(0).unwrap(), &accounts.alice);
+            assert_eq!(votantes.get(1).unwrap(), &accounts.bob);
+            assert_eq!(votantes.get(2).unwrap(), &accounts.charlie);
+        }
+
+       #[ink::test]
+        fn test_reporte_participacion_eleccion() {
+            let accounts = default_accounts::<DefaultEnvironment>();
+            let eleccion = Eleccion {
+                id: 0,
+                fecha_inicio: Fecha::new(1, 1, 2024),
+                fecha_fin: Fecha::new(31, 12, 2024),
+                votantes_sin_aceptar: Vec::new(),
+                votantes: vec![accounts.alice, accounts.bob, accounts.charlie],
+                candidatos_sin_aceptar: Vec::new(),
+                candidatos: Vec::new(),
+                votos: Vec::new(),
+                votantes_voto: vec![accounts.alice, accounts.bob]
+            };
+
+            let participacion = eleccion.reporte_participacion(&Fecha::new(1, 1, 2025)).unwrap();
+            assert_eq!(participacion.0, 3);
+            assert_eq!(participacion.1, 2);
+        }
+
+        #[ink::test]
+        fn test_reporte_participacion_eleccion_error_eleccion_no_finalizada() {
+            let accounts = default_accounts::<DefaultEnvironment>();
+            let eleccion = Eleccion {
+                id: 0,
+                fecha_inicio: Fecha::new(1, 1, 2024),
+                fecha_fin: Fecha::new(31, 12, 2024),
+                votantes_sin_aceptar: Vec::new(),
+                votantes: vec![accounts.alice, accounts.bob, accounts.charlie],
+                candidatos_sin_aceptar: Vec::new(),
+                candidatos: Vec::new(),
+                votos: Vec::new(),
+                votantes_voto: vec![accounts.alice, accounts.bob]
+            };
+
+            assert_eq!(eleccion.reporte_participacion(&Fecha::new(1, 1, 2024)), Err(VotacionError::EleccionNoFinalizada));
+        }
+
+        #[ink::test]
+        fn test_reporte_resultado_eleccion() {
+            let accounts = default_accounts::<DefaultEnvironment>();
+            let eleccion = Eleccion {
+                id: 0,
+                fecha_inicio: Fecha::new(1, 1, 2024),
+                fecha_fin: Fecha::new(31, 12, 2024),
+                votantes_sin_aceptar: Vec::new(),
+                votantes: vec![accounts.django, accounts.frank, accounts.charlie],
+                candidatos_sin_aceptar: vec![accounts.alice, accounts.bob],
+                candidatos: vec![accounts.alice, accounts.bob],
+                votos: vec![(accounts.alice, 2), (accounts.bob, 0)],
+                votantes_voto: vec![accounts.alice]
+            };
+
+            let mut resultado = eleccion.reporte_resultado(&Fecha::new(1, 1, 2025)).unwrap();
+            assert_eq!(resultado.len(), 2);
+            assert_eq!(resultado.pop().unwrap(), (accounts.bob, 0));
+            assert_eq!(resultado.pop().unwrap(), (accounts.alice, 2));
+        }
+
+        #[ink::test]
+        fn test_reporte_resultado_eleccion_error_eleccion_no_finalizada() {
+            let accounts = default_accounts::<DefaultEnvironment>();
+            let eleccion = Eleccion {
+                id: 0,
+                fecha_inicio: Fecha::new(1, 1, 2024),
+                fecha_fin: Fecha::new(31, 12, 2024),
+                votantes_sin_aceptar: Vec::new(),
+                votantes: vec![accounts.django, accounts.frank, accounts.charlie],
+                candidatos_sin_aceptar: vec![accounts.alice, accounts.bob],
+                candidatos: vec![accounts.alice, accounts.bob],
+                votos: vec![(accounts.alice, 2), (accounts.bob, 0)],
+                votantes_voto: vec![accounts.alice]
+            };
+
+            assert_eq!(eleccion.reporte_resultado(&Fecha::new(1, 1, 2024)), Err(VotacionError::EleccionNoFinalizada));
+        }
+
         // tests de ReportMessage
         #[ink::test]
         fn test_reporte_registro_votantes() {
@@ -2007,21 +2106,21 @@ mod votacion {
             let accounts = default_accounts::<DefaultEnvironment>();
             set_caller::<DefaultEnvironment>(id_reporte);
             set_block_timestamp::<DefaultEnvironment>(create_date(1, 1, 2026));
-            let reporte = votacion.reporte_registro_votantes(0).unwrap();
-            assert_eq!(reporte.votantes.get(0).unwrap().get_addres(), accounts.charlie);
-            assert_eq!(reporte.votantes.get(1).unwrap().get_addres(), accounts.django);
+            let mut reporte = votacion.reporte_registro_votantes(0).unwrap();
+            assert_eq!(reporte.len(), 2);
+            assert_eq!(reporte.pop().unwrap(), accounts.django);
+            assert_eq!(reporte.pop().unwrap(), accounts.charlie);
         }
 
         #[ink::test]
-        fn test_reporte_participacion() {
+        fn test_reporte_participacion_votacion() {
             let id_reporte = AccountId::from([0x10; 32]);
             let votacion = default_with_data(); //Eleccion de id = 0: 2 votantes aprobados/ eleccion de id = 1: 3 votantes aprobados
-            let accounts = default_accounts::<DefaultEnvironment>();
             set_caller::<DefaultEnvironment>(id_reporte);
             set_block_timestamp::<DefaultEnvironment>(create_date(1, 1, 2026));
             let reporte = votacion.reporte_participacion(0).unwrap();
-            assert_eq!(reporte.votos, 2);
-            assert_eq!(reporte.participacion, 100);
+            assert_eq!(reporte.0, 2);
+            assert_eq!(reporte.1, 2);
         }
 
         #[ink::test]
@@ -2032,12 +2131,12 @@ mod votacion {
             set_caller::<DefaultEnvironment>(id_reporte);
             set_block_timestamp::<DefaultEnvironment>(create_date(1, 1, 2026));
             let mut reporte = votacion.reporte_resultado(0).unwrap();
-            let primero = reporte.resultado.pop().unwrap();
-            let segundo = reporte.resultado.pop().unwrap();
-            assert_eq!(primero.0, accounts.alice);
-            assert_eq!(primero.1, 2);
-            assert_eq!(segundo.0, accounts.bob);
-            assert_eq!(segundo.1, 0);
+            let primero = reporte.pop().unwrap();
+            let segundo = reporte.pop().unwrap();
+            assert_eq!(primero.0, accounts.bob);
+            assert_eq!(primero.1, 0);
+            assert_eq!(segundo.0, accounts.alice);
+            assert_eq!(segundo.1, 2);
         }
     
         // tests de ReportMessageEleccion
