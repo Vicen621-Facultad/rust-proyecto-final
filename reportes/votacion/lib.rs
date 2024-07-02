@@ -9,6 +9,7 @@ pub use self::votacion::{
 };
 pub use self::errors::VotacionError;
 
+//TODO: Agregar mejores comentarios a los ink(message)
 #[ink::contract]
 mod votacion {
     use crate::errors::VotacionError;

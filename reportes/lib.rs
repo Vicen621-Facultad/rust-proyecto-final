@@ -1,6 +1,7 @@
 #![cfg_attr(not(feature = "std"), no_std, no_main)]
 #![allow(clippy::arithmetic_side_effects)]
 
+//TODO: Agregar mejores comentarios a los ink(message)
 #[ink::contract]
 mod reportes {
     #[cfg(not(test))]
