@@ -9,7 +9,6 @@ pub use self::votacion::{
 };
 pub use self::errors::VotacionError;
 
-//TODO: Agregar mejores comentarios a los ink(message)
 #[ink::contract]
 mod votacion {
     use crate::errors::VotacionError;
@@ -92,16 +91,16 @@ mod votacion {
         /// Devuelve el usuario creado si no hay errores
         /// 
         /// # Errores
-        /// Devuelve un error si el usuario ya está registrado
-        /// Devuelve un error si el usuario ya está postulado
-        /// Devuelve un error si el usuario ya está aceptado
+        /// - Devuelve un error si el usuario ya está registrado
+        /// - Devuelve un error si el usuario ya está postulado
+        /// - Devuelve un error si el usuario ya está aceptado
         #[ink(message)]
         fn postular_usuario(&mut self, nombre: String, apellido: String, direccion: String, dni: String, edad: u8) -> Result<Usuario>;
         /// Acepta un usuario de la lista usuarios_por_aceptar y lo agrega a la lista de usuarios
         /// 
         /// # Errores
-        /// Devuelve un error si el caller no es el admin
-        /// Devuelve un error si el usuario no se encuentra en la lista de usuarios postulados
+        /// - Devuelve un error si el caller no es el admin
+        /// - Devuelve un error si el usuario no se encuentra en la lista de usuarios postulados
         #[ink(message)]
         fn aceptar_usuario(&mut self, id: AccountId) -> Result<()>;
         /// Obtiene un usuario sin aceptar por su id
@@ -123,96 +122,96 @@ mod votacion {
         /// Postula un candidato a la eleccion con el id pasado por parametro
         /// 
         /// # Errores
-        /// Devuelve un error si el usuario no esta aceptado
-        /// Devuelve un error si el usuario no es encontrado
-        /// Devuelve un error si la eleccion no se encuentra
-        /// Devuelve un error si la eleccion ya finalizo
-        /// Devuelve un error si la eleccion ya inicio
-        /// Devuelve un error si el usuario ya está registrado como candidato
-        /// Devuelve un error si el usuario ya está postulado como candidato
-        /// Devuelve un error si el usuario ya está registrado como votante
-        /// Devuelve un error si el usuario ya está postulado como votante
+        /// - Devuelve un error si el usuario no esta aceptado
+        /// - Devuelve un error si el usuario no es encontrado
+        /// - Devuelve un error si la eleccion no se encuentra
+        /// - Devuelve un error si la eleccion ya finalizo
+        /// - Devuelve un error si la eleccion ya inicio
+        /// - Devuelve un error si el usuario ya está registrado como candidato
+        /// - Devuelve un error si el usuario ya está postulado como candidato
+        /// - Devuelve un error si el usuario ya está registrado como votante
+        /// - Devuelve un error si el usuario ya está postulado como votante
         #[ink(message)]
         fn postular_candidato(&mut self, id_eleccion: u32) -> Result<()>;
         /// Postula un votante a la eleccion con el id pasado por parametro
         /// 
         /// # Errores
-        /// Devuelve un error si el usuario no esta aceptado
-        /// Devuelve un error si el usuario no es encontrado
-        /// Devuelve un error si la eleccion no es encontrada   
-        /// Devuelve un error si la eleccion ya finalizo
-        /// Devuelve un error si la eleccion ya inicio
-        /// Devuelve un error si el usuario ya está registrado como candidato
-        /// Devuelve un error si el usuario ya está postulado como candidato
-        /// Devuelve un error si el usuario ya está registrado como votante
-        /// Devuelve un error si el usuario ya está postulado como votante
+        /// - Devuelve un error si el usuario no esta aceptado
+        /// - Devuelve un error si el usuario no es encontrado
+        /// - Devuelve un error si la eleccion no es encontrada   
+        /// - Devuelve un error si la eleccion ya finalizo
+        /// - Devuelve un error si la eleccion ya inicio
+        /// - Devuelve un error si el usuario ya está registrado como candidato
+        /// - Devuelve un error si el usuario ya está postulado como candidato
+        /// - Devuelve un error si el usuario ya está registrado como votante
+        /// - Devuelve un error si el usuario ya está postulado como votante
         #[ink(message)]
         fn postular_votante(&mut self, id_eleccion: u32) -> Result<()>;
         /// Acepta un candidato postulado a la eleccion con el id pasado por parametro
         /// 
         /// # Errores
-        /// Devuelve un error si el caller no es el admin
-        /// Devuelve un error si el usuario no es encontrado
-        /// Devuelve un error si la eleccion no es encontrada
-        /// Devuelve un error si la eleccion ya finalizo
-        /// Devuelve un error si la eleccion ya inicio
-        /// Devuelve un error si el usuario no está postulado como candidato
+        /// - Devuelve un error si el caller no es el admin
+        /// - Devuelve un error si el usuario no es encontrado
+        /// - Devuelve un error si la eleccion no es encontrada
+        /// - Devuelve un error si la eleccion ya finalizo
+        /// - Devuelve un error si la eleccion ya inicio
+        /// - Devuelve un error si el usuario no está postulado como candidato
         #[ink(message)]
         fn agregar_candidato(&mut self, id_eleccion: u32, id_candidato: AccountId) -> Result<()>;
         /// Acepta un votante postulado a la eleccion con el id pasado por parametro
         /// 
         /// # Errores
-        /// Devuelve un error si el caller no es el admin
-        /// Devuelve un error si el usuario no es encontrado
-        /// Devuelve un error si la eleccion no es encontrada
-        /// Devuelve un error si la eleccion ya finalizo
-        /// Devuelve un error si la eleccion ya inicio
-        /// Devuelve un error si el usuario no está postulado como votante
+        /// - Devuelve un error si el caller no es el admin
+        /// - Devuelve un error si el usuario no es encontrado
+        /// - Devuelve un error si la eleccion no es encontrada
+        /// - Devuelve un error si la eleccion ya finalizo
+        /// - Devuelve un error si la eleccion ya inicio
+        /// - Devuelve un error si el usuario no está postulado como votante
         #[ink(message)]
         fn agregar_votante(&mut self, id_eleccion: u32, id_votante: AccountId) -> Result<()>;
         /// El votante (caller) vota por un candidato en una eleccion con el id pasado por parametro
         /// 
         /// # Errores
-        /// Devuelve un error si el votante no es encontrado
-        /// Devuelve un error si el candidato no es encontrado
-        /// Devuelve un error si la eleccion no es encontrada
-        /// Devuelve un error si la eleccion ya finalizo
-        /// Devuelve un error si la eleccion no inicio
-        /// Devuelve un error si el votante ya voto
-        /// Devuelve un error si el votante no está registrado como votante
-        /// Devuelve un error si el candidato no está registrado como 
+        /// - Devuelve un error si el votante no es encontrado
+        /// - Devuelve un error si el candidato no es encontrado
+        /// - Devuelve un error si la eleccion no es encontrada
+        /// - Devuelve un error si la eleccion ya finalizo
+        /// - Devuelve un error si la eleccion no inicio
+        /// - Devuelve un error si el votante ya voto
+        /// - Devuelve un error si el votante no está registrado como votante
+        /// - Devuelve un error si el candidato no está registrado como 
         #[ink(message)]
         fn votar(&mut self, id_eleccion: u32, id_candidato: AccountId) -> Result<()>;
         /// Devuelve true si el usuario ya voto en la eleccion con el id pasado como parametro
         /// false en cualquier otro caso
         /// 
         /// # Errores
-        /// Devuelve un error si el caller no es el admin
-        /// Devuelve un error si el usuario no es encontrado
-        /// Devuelve un error si la eleccion no es encontrada
+        /// - Devuelve un error si el caller no es el admin
+        /// - Devuelve un error si el usuario no es encontrado
+        /// - Devuelve un error si la eleccion no es encontrada
         #[ink(message)]
         fn ya_voto(&self, id_eleccion: u32, id_votante: AccountId) -> Result<bool>;
         /// Devuelve true si la elección ya inició
         /// 
         /// # Errores
-        /// Devuelve un error si el caller no es el admin
-        /// Devuelve un error si la eleccion no es encontrada
+        /// - Devuelve un error si el caller no es el admin
+        /// - Devuelve un error si la eleccion no es encontrada
         #[ink(message)]
         fn get_iniciada(&self, id_eleccion: u32) -> Result<bool>;
         /// Devuelve true si la elección con el id pasado como parametro ya finalizó
         /// 
         /// # Errores
-        /// Devuelve un error si el caller no es el admin
-        /// Devuelve un error si la eleccion no es encontrada
+        /// - Devuelve un error si el caller no es el admin
+        /// - Devuelve un error si la eleccion no es encontrada
         #[ink(message)]
         fn get_finalizada(&self, id_eleccion: u32) -> Result<bool>;
         /// Devuelve la cantidad de votos del candidato en la eleccion con el id pasado como parametro
         /// 
         /// # Errores
-        /// Devuelve un error si el caller no es el admin
-        /// Devuelve un error si la eleccion no es encontrada
-        /// Devuelve un error si la eleccion no finalizó
-        /// Devuelve un error si el candidato no es encontrado
+        /// - Devuelve un error si el caller no es el admin
+        /// - Devuelve un error si la eleccion no es encontrada
+        /// - Devuelve un error si la eleccion no finalizó
+        /// - Devuelve un error si el candidato no es encontrado
         #[ink(message)]
         fn get_votos_candidato(&self, id_eleccion: u32, id_candidato: AccountId) -> Result<u32>;
     }
@@ -246,9 +245,9 @@ mod votacion {
         /// Devuelve el id de la elección creada
         /// 
         /// # Errores
-        /// Devuelve un error si el caller no es el admin
-        /// Devuelve un error si la fecha de inicio o fin no es válida
-        /// Devuelve un error si la fecha de inicio es mayor que la fecha de fin
+        /// - Devuelve un error si el caller no es el admin
+        /// - Devuelve un error si la fecha de inicio o fin no es válida
+        /// - Devuelve un error si la fecha de inicio es mayor que la fecha de fin
         #[ink(message)]
         fn crear_eleccion(&mut self, fecha_inicio: Fecha, fecha_fin: Fecha) -> Result<u32>;
         /// Devuelve una elección por su ID
@@ -403,9 +402,10 @@ mod votacion {
             }
 
             self.votantes_voto.push(*id_votante);
-            self.votos.iter_mut()
-                .find(|(candidato, _)| candidato == id_candidato)
-                .map(|(_, votos)| *votos += 1);
+            if let Some((_, votos)) = self.votos.iter_mut()
+                .find(|(candidato, _)| candidato == id_candidato) {
+                    *votos += 1;
+                }
             Ok(())
         }
 
@@ -556,7 +556,8 @@ mod votacion {
 
     impl Votacion {
         /// Constructor por defecto
-        pub fn default() -> Self {
+        #[cfg(test)]
+        pub fn new() -> Self {
             Self {
                 admin: Self::env().caller(),
                 reporte: AccountId::from([0x10; 32]),
@@ -568,6 +569,7 @@ mod votacion {
 
         /// Constructor del contrato
         #[ink(constructor)]
+        #[cfg(not(test))]
         pub fn new(reporte: AccountId) -> Self {
             Self {
                 admin: Self::env().caller(),
@@ -579,7 +581,9 @@ mod votacion {
         }
 
         /// Cambia el administrador del contrato al nuevo pasado por parametro
-        /// Solo el admin puede cambiar el admin
+        /// solo el admin puede cambiar el admin
+        /// 
+        /// # Errores
         /// Devuelve un error si el caller no es el admin
         #[ink(message)]
         pub fn set_admin(&mut self, new_admin: AccountId) -> Result<()> {
@@ -592,7 +596,9 @@ mod votacion {
         }
 
         /// Cambia el AccountId del reporte al nuevo pasado por parametro
-        /// Solo el admin puede cambiar el reporte
+        /// solo el admin puede cambiar el reporte
+        /// 
+        /// # Errores
         /// Devuelve un error si el caller no es el admin
         #[ink(message)]
         pub fn set_reporte(&mut self, new_reporte: AccountId) -> Result<()> {
@@ -612,12 +618,12 @@ mod votacion {
 
     impl EleccionManager for Votacion {
         /// Crea una elección y la agrega a la lista de elecciones
-        /// Devuelve el id de la elección creada
+        /// devuelve el id de la elección creada
         /// 
         /// # Errores
-        /// Devuelve un error si el caller no es el admin
-        /// Devuelve un error si la fecha de inicio o fin no es válida
-        /// Devuelve un error si la fecha de inicio es mayor que la fecha de fin
+        /// - Devuelve un error si el caller no es el admin
+        /// - Devuelve un error si la fecha de inicio o fin no es válida
+        /// - Devuelve un error si la fecha de inicio es mayor que la fecha de fin
         #[ink(message)]
         fn crear_eleccion(&mut self, fecha_inicio: Fecha, fecha_fin: Fecha) -> Result<u32> {
             if !self.caller_is_admin() {
@@ -642,8 +648,7 @@ mod votacion {
             Ok(id)
         }
 
-        /// Devuelve una elección por su ID
-        /// Devuelve None si la elección no se encuentra
+        /// Devuelve una elección por su ID, None si la elección no se encuentra
         #[ink(message)]
         fn get_eleccion(&self, id: u32) -> Option<Eleccion> {
             self.elecciones.get(id as usize).cloned()
@@ -661,8 +666,8 @@ mod votacion {
         /// Devuelve el usuario creado si no hay errores
         /// 
         /// # Errores
-        /// Devuelve un error si el usuario ya está registrado
-        /// Devuelve un error si el usuario ya está postulado
+        /// - Devuelve un error si el usuario ya está registrado
+        /// - Devuelve un error si el usuario ya está postulado
         #[ink(message)]
         fn postular_usuario(&mut self, nombre: String, apellido: String, direccion: String, dni: String, edad: u8) -> Result<Usuario> {
             let id = self.env().caller();
@@ -691,8 +696,8 @@ mod votacion {
         /// Acepta un usuario de la lista usuarios_por_aceptar y lo agrega a la lista de usuarios
         /// 
         /// # Errores
-        /// Devuelve un error si el caller no es el admin
-        /// Devuelve un error si el usuario no se encuentra en la lista de usuarios postulados
+        /// - Devuelve un error si el caller no es el admin
+        /// - Devuelve un error si el usuario no se encuentra en la lista de usuarios postulados
         #[ink(message)]
         fn aceptar_usuario(&mut self, id: AccountId) -> Result<()>{
             if !self.caller_is_admin() {
@@ -730,15 +735,15 @@ mod votacion {
         /// Postula un candidato a la eleccion con el id pasado por parametro
         /// 
         /// # Errores
-        /// Devuelve un error si el usuario no esta aceptado
-        /// Devuelve un error si el usuario no es encontrado
-        /// Devuelve un error si la eleccion no se encuentra
-        /// Devuelve un error si la eleccion ya finalizo
-        /// Devuelve un error si la eleccion ya inicio
-        /// Devuelve un error si el usuario ya está registrado como candidato
-        /// Devuelve un error si el usuario ya está postulado como candidato
-        /// Devuelve un error si el usuario ya está registrado como votante
-        /// Devuelve un error si el usuario ya está postulado como votante
+        /// - Devuelve un error si el usuario no esta aceptado
+        /// - Devuelve un error si el usuario no es encontrado
+        /// - Devuelve un error si la eleccion no se encuentra
+        /// - Devuelve un error si la eleccion ya finalizo
+        /// - Devuelve un error si la eleccion ya inicio
+        /// - Devuelve un error si el usuario ya está registrado como candidato
+        /// - Devuelve un error si el usuario ya está postulado como candidato
+        /// - Devuelve un error si el usuario ya está registrado como votante
+        /// - Devuelve un error si el usuario ya está postulado como votante
         #[ink(message)]
         fn postular_candidato(&mut self, id_eleccion: u32) -> Result<()> {
             let usuario_actual = self.env().caller();
@@ -763,15 +768,15 @@ mod votacion {
         /// Postula un votante a la eleccion con el id pasado por parametro
         /// 
         /// # Errores
-        /// Devuelve un error si el usuario no esta aceptado
-        /// Devuelve un error si el usuario no es encontrado
-        /// Devuelve un error si la eleccion no es encontrada
-        /// Devuelve un error si la eleccion ya finalizo
-        /// Devuelve un error si la eleccion ya inicio
-        /// Devuelve un error si el usuario ya está registrado como candidato
-        /// Devuelve un error si el usuario ya está postulado como candidato
-        /// Devuelve un error si el usuario ya está registrado como votante
-        /// Devuelve un error si el usuario ya está postulado como votante
+        /// - Devuelve un error si el usuario no esta aceptado
+        /// - Devuelve un error si el usuario no es encontrado
+        /// - Devuelve un error si la eleccion no es encontrada
+        /// - Devuelve un error si la eleccion ya finalizo
+        /// - Devuelve un error si la eleccion ya inicio
+        /// - Devuelve un error si el usuario ya está registrado como candidato
+        /// - Devuelve un error si el usuario ya está postulado como candidato
+        /// - Devuelve un error si el usuario ya está registrado como votante
+        /// - Devuelve un error si el usuario ya está postulado como votante
         #[ink(message)]
         fn postular_votante(&mut self, id_eleccion: u32) -> Result<()> {
             let usuario_actual = self.env().caller();
@@ -796,12 +801,12 @@ mod votacion {
         /// Acepta un candidato postulado a la eleccion con el id pasado por parametro
         /// 
         /// # Errores
-        /// Devuelve un error si el caller no es el admin
-        /// Devuelve un error si el usuario no es encontrado
-        /// Devuelve un error si la eleccion no es encontrada
-        /// Devuelve un error si la eleccion ya finalizo
-        /// Devuelve un error si la eleccion ya inicio
-        /// Devuelve un error si el usuario no está postulado como candidato
+        /// - Devuelve un error si el caller no es el admin
+        /// - Devuelve un error si el usuario no es encontrado
+        /// - Devuelve un error si la eleccion no es encontrada
+        /// - Devuelve un error si la eleccion ya finalizo
+        /// - Devuelve un error si la eleccion ya inicio
+        /// - Devuelve un error si el usuario no está postulado como candidato
         #[ink(message)]
         fn agregar_candidato(&mut self, id_eleccion: u32, id_candidato: AccountId) -> Result<()> {
             if !self.caller_is_admin() {
@@ -824,12 +829,12 @@ mod votacion {
         /// Acepta un votante postulado a la eleccion con el id pasado por parametro
         /// 
         /// # Errores
-        /// Devuelve un error si el caller no es el admin
-        /// Devuelve un error si el usuario no es encontrado
-        /// Devuelve un error si la eleccion no es encontrada
-        /// Devuelve un error si la eleccion ya finalizo
-        /// Devuelve un error si la eleccion ya inicio
-        /// Devuelve un error si el usuario no está postulado como votante
+        /// - Devuelve un error si el caller no es el admin
+        /// - Devuelve un error si el usuario no es encontrado
+        /// - Devuelve un error si la eleccion no es encontrada
+        /// - Devuelve un error si la eleccion ya finalizo
+        /// - Devuelve un error si la eleccion ya inicio
+        /// - Devuelve un error si el usuario no está postulado como votante
         #[ink(message)]
         fn agregar_votante(&mut self, id_eleccion: u32, id_votante: AccountId) -> Result<()> {
             if !self.caller_is_admin() {
@@ -852,14 +857,14 @@ mod votacion {
         /// El votante (caller) vota por un candidato en una eleccion con el id pasado por parametro
         /// 
         /// # Errores
-        /// Devuelve un error si el votante no es encontrado
-        /// Devuelve un error si el candidato no es encontrado
-        /// Devuelve un error si la eleccion no es encontrada
-        /// Devuelve un error si la eleccion ya finalizo
-        /// Devuelve un error si la eleccion no inicio
-        /// Devuelve un error si el votante ya voto
-        /// Devuelve un error si el votante no está registrado como votante
-        /// Devuelve un error si el candidato no está registrado como candidato
+        /// - Devuelve un error si el votante no es encontrado
+        /// - Devuelve un error si el candidato no es encontrado
+        /// - Devuelve un error si la eleccion no es encontrada
+        /// - Devuelve un error si la eleccion ya finalizo
+        /// - Devuelve un error si la eleccion no inicio
+        /// - Devuelve un error si el votante ya voto
+        /// - Devuelve un error si el votante no está registrado como votante
+        /// - Devuelve un error si el candidato no está registrado como candidato
         #[ink(message)]
         fn votar(&mut self, id_eleccion: u32, id_candidato: AccountId) -> Result<()> {
             let caller = self.env().caller();
@@ -880,9 +885,9 @@ mod votacion {
         /// false en cualquier otro caso
         /// 
         /// # Errores
-        /// Devuelve un error si el caller no es el admin
-        /// Devuelve un error si el usuario no es encontrado
-        /// Devuelve un error si la eleccion no es encontrada
+        /// - Devuelve un error si el caller no es el admin
+        /// - Devuelve un error si el usuario no es encontrado
+        /// - Devuelve un error si la eleccion no es encontrada
         #[ink(message)]
         fn ya_voto(&self, id_eleccion: u32, id_votante: AccountId) -> Result<bool> {
             if !self.caller_is_admin() {
@@ -903,8 +908,8 @@ mod votacion {
         /// Devuelve true si la elección ya inició
         /// 
         /// # Errores
-        /// Devuelve un error si el caller no es el admin
-        /// Devuelve un error si la eleccion no es encontrada
+        /// - Devuelve un error si el caller no es el admin
+        /// - Devuelve un error si la eleccion no es encontrada
         #[ink(message)]
         fn get_iniciada(&self, id_eleccion: u32) -> Result<bool> {
             if !self.caller_is_admin() {
@@ -923,8 +928,8 @@ mod votacion {
         /// Devuelve true si la elección con el id pasado como parametro ya finalizó
         /// 
         /// # Errores
-        /// Devuelve un error si el caller no es el admin
-        /// Devuelve un error si la eleccion no es encontrada
+        /// - Devuelve un error si el caller no es el admin
+        /// - Devuelve un error si la eleccion no es encontrada
         #[ink(message)]
         fn get_finalizada(&self, id_eleccion: u32) -> Result<bool> {
             if !self.caller_is_admin() {
@@ -943,10 +948,10 @@ mod votacion {
         /// Devuelve la cantidad de votos del candidato en la eleccion con el id pasado como parametro
         /// 
         /// # Errores
-        /// Devuelve un error si el caller no es el admin
-        /// Devuelve un error si la eleccion no es encontrada
-        /// Devuelve un error si la eleccion no finalizó
-        /// Devuelve un error si el candidato no es encontrado
+        /// - Devuelve un error si el caller no es el admin
+        /// - Devuelve un error si la eleccion no es encontrada
+        /// - Devuelve un error si la eleccion no finalizó
+        /// - Devuelve un error si el candidato no es encontrado
         #[ink(message)]
         fn get_votos_candidato(&self, id_eleccion: u32, id_candidato: AccountId) -> Result<u32> {
             if !self.caller_is_admin() {
@@ -968,8 +973,8 @@ mod votacion {
         /// si no hay votantes devuelve un vector vacio
         /// 
         /// # Errores
-        /// Devuelve un error si el caller no es el reporte
-        /// Devuelve un error si la eleccion no es encontrada
+        /// - Devuelve un error si el caller no es el reporte
+        /// - Devuelve un error si la eleccion no es encontrada
         #[ink(message)]
         fn reporte_registro_votantes(&self, eleccion_id: u32) -> Result<Vec<AccountId>> {
             if !self.caller_is_reporte() {
@@ -985,9 +990,9 @@ mod votacion {
         /// Devuelve un tuple que contiene la cantidad de votantes y la cantidad de votos, en ese orden
         /// 
         /// # Errores
-        /// Devuelve un error si el caller no es el reporte
-        /// Devuelve un error si la eleccion no es encontrada
-        /// Devuelve un error si la eleccion no finalizó
+        /// - Devuelve un error si el caller no es el reporte
+        /// - Devuelve un error si la eleccion no es encontrada
+        /// - Devuelve un error si la eleccion no finalizó
         #[ink(message)]
         fn reporte_participacion(&self, eleccion_id: u32) -> Result<(u128, u128)> {
             if !self.caller_is_reporte() {
@@ -1000,12 +1005,13 @@ mod votacion {
             eleccion.reporte_participacion(&Fecha::from_timestamp(timestamp))
         }
 
-        /// Devuelve un vector que contiene para cada posicion el AccountId de un candidato y la cantidad de votos que obtuvo
+        /// Devuelve un vector que contiene para cada posicion el AccountId 
+        /// de un candidato y la cantidad de votos que obtuvo
         /// 
         /// # Errores
-        /// Devuelve un error si el caller no es el reporte
-        /// Devuelve un error si la eleccion no es encontrada
-        /// Devuelve un error si la eleccion no finalizó
+        /// - Devuelve un error si el caller no es el reporte
+        /// - Devuelve un error si la eleccion no es encontrada
+        /// - Devuelve un error si la eleccion no finalizó
         #[ink(message)]
         fn reporte_resultado(&self, eleccion_id: u32) -> Result<Vec<(AccountId, u32)>> {
             if !self.caller_is_reporte() {
@@ -1025,24 +1031,25 @@ mod votacion {
         /// si no hay votantes devuelve un vector vacio
         /// 
         /// # Errores
-        /// Devuelve un error si el caller no es el reporte
-        /// Devuelve un error si la eleccion no es encontrada
+        /// - Devuelve un error si el caller no es el reporte
+        /// - Devuelve un error si la eleccion no es encontrada
         #[ink(message)]
         fn reporte_registro_votantes(&self, eleccion_id: u32) -> Result<Vec<AccountId>>;
         /// Devuelve un tuple que contiene la cantidad de votantes y la cantidad de votos, en ese orden
         /// 
         /// # Errores
-        /// Devuelve un error si el caller no es el reporte
-        /// Devuelve un error si la eleccion no es encontrada
-        /// Devuelve un error si la eleccion no finalizó
+        /// - Devuelve un error si el caller no es el reporte
+        /// - Devuelve un error si la eleccion no es encontrada
+        /// - Devuelve un error si la eleccion no finalizó
         #[ink(message)]
         fn reporte_participacion(&self, eleccion_id: u32) -> Result<(u128, u128)>;
-        /// Devuelve un vector que contiene para cada posicion el AccountId de un candidato y la cantidad de votos que obtuvo
+        /// Devuelve un vector que contiene para cada posicion el AccountId 
+        /// de un candidato y la cantidad de votos que obtuvo
         /// 
         /// # Errores
-        /// Devuelve un error si el caller no es el reporte
-        /// Devuelve un error si la eleccion no es encontrada
-        /// Devuelve un error si la eleccion no finalizó
+        /// - Devuelve un error si el caller no es el reporte
+        /// - Devuelve un error si la eleccion no es encontrada
+        /// - Devuelve un error si la eleccion no finalizó
         #[ink(message)]
         fn reporte_resultado(&self, eleccion_id: u32) -> Result<Vec<(AccountId, u32)>>;
     }
@@ -1067,7 +1074,7 @@ mod votacion {
         pub fn default_with_data() -> Votacion {
             let accounts = default_accounts::<DefaultEnvironment>();
             set_caller::<DefaultEnvironment>(accounts.frank);
-            let mut votacion = Votacion::default();
+            let mut votacion = Votacion::new();
             //Creo dos elecciones nuevas (admin)
             votacion.crear_eleccion(Fecha::new(1, 1, 2024), Fecha::new(31, 12, 2024)).unwrap();
             votacion.crear_eleccion(Fecha::new(1, 1, 2024), Fecha::new(31, 12, 2024)).unwrap();
@@ -1142,7 +1149,7 @@ mod votacion {
         fn test_set_admin() {
             let accounts =
                 default_accounts::<DefaultEnvironment>();
-            let mut votacion = Votacion::default();
+            let mut votacion = Votacion::new();
             votacion.set_admin(accounts.bob).unwrap();
             assert_eq!(votacion.admin, accounts.bob);
         }
@@ -1201,7 +1208,7 @@ mod votacion {
         // Tests de VotacionImpl
         #[ink::test]
         fn test_crear_eleccion() {
-            let mut votacion = Votacion::default();
+            let mut votacion = Votacion::new();
             let fecha_inicio = Fecha::new(1, 1, 2024);
             let fecha_fin = Fecha::new(31, 12, 2024);
             let id_eleccion = votacion.crear_eleccion(fecha_inicio.clone(), fecha_fin.clone()).unwrap();
@@ -1217,7 +1224,7 @@ mod votacion {
                 default_accounts::<DefaultEnvironment>();
             
             set_caller::<DefaultEnvironment>(accounts.bob);
-            let mut votacion = Votacion::default();
+            let mut votacion = Votacion::new();
             let fecha_inicio = Fecha::new(1, 1, 2024);
             let fecha_fin = Fecha::new(31, 12, 2024);
             set_caller::<DefaultEnvironment>(accounts.alice);
@@ -1227,7 +1234,7 @@ mod votacion {
 
         #[ink::test]
         fn test_crear_eleccion_error_fecha_inicio_mayor_que_fin() {
-            let mut votacion = Votacion::default();
+            let mut votacion = Votacion::new();
             let fecha_inicio = Fecha::new(1, 1, 2024);
             let fecha_fin = Fecha::new(31, 12, 2023);
             let eleccion = votacion.crear_eleccion(fecha_inicio, fecha_fin);
@@ -1236,7 +1243,7 @@ mod votacion {
 
         #[ink::test]
         fn test_get_eleccion() {
-            let mut votacion = Votacion::default();
+            let mut votacion = Votacion::new();
             let eleccion = votacion.crear_eleccion(Fecha::new(1, 1, 2024), Fecha::new(31, 12, 2024)).unwrap();
             assert_eq!(votacion.get_eleccion(0).unwrap().get_id(), eleccion);
         }
@@ -1247,7 +1254,7 @@ mod votacion {
             let accounts =
                 default_accounts::<DefaultEnvironment>();
             set_caller::<DefaultEnvironment>(accounts.bob);
-            let mut votacion = Votacion::default();
+            let mut votacion = Votacion::new();
             let usuario = votacion.postular_usuario("Juan".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
             assert_eq!(usuario.get_addres(), accounts.bob);
             assert_eq!(usuario.get_nombre(), "Juan".to_string());
@@ -1259,7 +1266,7 @@ mod votacion {
 
         #[ink::test]
         fn test_crear_usuario_error_usuario_no_aceptado() {
-            let mut votacion = Votacion::default();
+            let mut votacion = Votacion::new();
             votacion.postular_usuario("Juan".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
             let usuario = votacion.postular_usuario("Juan".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30);
             assert_eq!(usuario, Err(VotacionError::UsuarioNoAceptado));
@@ -1270,7 +1277,7 @@ mod votacion {
             let accounts =
                 default_accounts::<DefaultEnvironment>();
                 set_caller::<DefaultEnvironment>(accounts.bob);
-            let mut votacion = Votacion::default();
+            let mut votacion = Votacion::new();
             votacion.usuarios.push(Usuario::new(accounts.bob, "Juan".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30));
             let usuario = votacion.postular_usuario("Juan".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30);
             assert_eq!(usuario, Err(VotacionError::UsuarioYaRegistrado));
@@ -1281,7 +1288,7 @@ mod votacion {
             let accounts =
                 default_accounts::<DefaultEnvironment>();
             set_caller::<DefaultEnvironment>(accounts.bob);
-            let mut votacion = Votacion::default();
+            let mut votacion = Votacion::new();
             votacion.postular_usuario("Juan".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
             votacion.aceptar_usuario(accounts.bob).unwrap();
             assert_eq!(votacion.usuarios_sin_aceptar.len(), 0);
@@ -1293,7 +1300,7 @@ mod votacion {
             let accounts =
                 default_accounts::<DefaultEnvironment>();
             set_caller::<DefaultEnvironment>(accounts.charlie);
-            let mut votacion = Votacion::default();
+            let mut votacion = Votacion::new();
             votacion.postular_usuario("Juan".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
             set_caller::<DefaultEnvironment>(accounts.alice);
             let usuario = votacion.aceptar_usuario(accounts.bob);
@@ -1304,7 +1311,7 @@ mod votacion {
         fn test_aceptar_usuario_error_usuario_sin_aceptar_no_encontrado() {
             let accounts =
                 default_accounts::<DefaultEnvironment>();
-            let mut votacion = Votacion::default();
+            let mut votacion = Votacion::new();
             let usuario = votacion.aceptar_usuario(accounts.bob);
             assert_eq!(usuario, Err(VotacionError::UsuarioSinAceptarNoEncontrado));
         }
@@ -1314,7 +1321,7 @@ mod votacion {
             let accounts =
             default_accounts::<DefaultEnvironment>();
             set_caller::<DefaultEnvironment>(accounts.bob);
-            let mut votacion = Votacion::default();
+            let mut votacion = Votacion::new();
             votacion.postular_usuario("Juan".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
             assert_eq!(votacion.get_usuario_sin_aceptar(accounts.bob).unwrap().get_addres(), accounts.bob);
         }
@@ -1323,7 +1330,7 @@ mod votacion {
         fn test_get_usuario_sin_aceptar_error_usuario_sin_aceptar_no_encontrado() {
             let accounts =
                 default_accounts::<DefaultEnvironment>();
-            let votacion = Votacion::default();
+            let votacion = Votacion::new();
             let usuario = votacion.get_usuario_sin_aceptar(accounts.bob);
             assert_eq!(usuario, Err(VotacionError::UsuarioSinAceptarNoEncontrado));
         }
@@ -1333,7 +1340,7 @@ mod votacion {
             let accounts =
                 default_accounts::<DefaultEnvironment>();
             set_caller::<DefaultEnvironment>(accounts.bob);
-            let mut votacion = Votacion::default();
+            let mut votacion = Votacion::new();
             votacion.postular_usuario("Juan".to_string(), "Perez".to_string(), "Calle Falsa 123".to_string(), "12345678".to_string(), 30).unwrap();
             votacion.aceptar_usuario(accounts.bob).unwrap();
             assert_eq!(votacion.get_usuario(accounts.bob).unwrap().get_addres(), accounts.bob);
@@ -1343,7 +1350,7 @@ mod votacion {
         fn test_get_usuario_error_usuario_no_encontrado() {
             let accounts =
                 default_accounts::<DefaultEnvironment>();
-            let votacion = Votacion::default();
+            let votacion = Votacion::new();
             let usuario = votacion.get_usuario(accounts.bob);
             assert_eq!(usuario, Err(VotacionError::UsuarioNoEncontrado));
         }
@@ -1718,7 +1725,7 @@ mod votacion {
         fn test_postular_candidato_votacion() {
             let accounts = default_accounts::<DefaultEnvironment>();
             set_caller::<DefaultEnvironment>(accounts.alice);
-            let mut votacion = Votacion::default();
+            let mut votacion = Votacion::new();
             let id_eleccion = votacion.crear_eleccion(Fecha::new(1, 1, 2024), Fecha::new(31, 12, 2024)).unwrap();
 
             set_block_timestamp::<DefaultEnvironment>(Fecha::new(31, 12, 2023).timestamp().unwrap());
@@ -1737,7 +1744,7 @@ mod votacion {
         #[ink::test]
         fn test_postular_candidato_votacion_error_usuario_no_aceptado() {
             let accounts = default_accounts::<DefaultEnvironment>();
-            let mut votacion = Votacion::default();
+            let mut votacion = Votacion::new();
             let id_eleccion = votacion.crear_eleccion(Fecha::new(1, 1, 2024), Fecha::new(31, 12, 2024)).unwrap();
 
             set_block_timestamp::<DefaultEnvironment>(Fecha::new(31, 12, 2023).timestamp().unwrap());
@@ -1754,7 +1761,7 @@ mod votacion {
         fn test_postular_candidato_votacion_error_usuario_no_encontrado() {
             let accounts = default_accounts::<DefaultEnvironment>();
             set_caller::<DefaultEnvironment>(accounts.alice);
-            let mut votacion = Votacion::default();
+            let mut votacion = Votacion::new();
             let id_eleccion = votacion.crear_eleccion(Fecha::new(1, 1, 2024), Fecha::new(31, 12, 2024)).unwrap();
 
             set_block_timestamp::<DefaultEnvironment>(Fecha::new(31, 12, 2023).timestamp().unwrap());
@@ -1768,7 +1775,7 @@ mod votacion {
         fn test_agregar_candidato_votacion() {
             let accounts = default_accounts::<DefaultEnvironment>();
             set_caller::<DefaultEnvironment>(accounts.alice);
-            let mut votacion = Votacion::default();
+            let mut votacion = Votacion::new();
             let id_eleccion = votacion.crear_eleccion(Fecha::new(1, 1, 2024), Fecha::new(31, 12, 2024)).unwrap();
 
             set_block_timestamp::<DefaultEnvironment>(Fecha::new(31, 12, 2023).timestamp().unwrap());
@@ -1790,7 +1797,7 @@ mod votacion {
         fn test_agregar_candidato_votacion_error_no_es_admin() {
             let accounts = default_accounts::<DefaultEnvironment>();
             set_caller::<DefaultEnvironment>(accounts.alice);
-            let mut votacion = Votacion::default();
+            let mut votacion = Votacion::new();
             let id_eleccion = votacion.crear_eleccion(Fecha::new(1, 1, 2024), Fecha::new(31, 12, 2024)).unwrap();
 
             set_block_timestamp::<DefaultEnvironment>(Fecha::new(31, 12, 2023).timestamp().unwrap());
@@ -1810,7 +1817,7 @@ mod votacion {
         fn test_postular_votante_votacion() {
             let accounts = default_accounts::<DefaultEnvironment>();
             set_caller::<DefaultEnvironment>(accounts.alice);
-            let mut votacion = Votacion::default();
+            let mut votacion = Votacion::new();
             let id_eleccion = votacion.crear_eleccion(Fecha::new(1, 1, 2024), Fecha::new(31, 12, 2024)).unwrap();
 
             set_block_timestamp::<DefaultEnvironment>(Fecha::new(31, 12, 2023).timestamp().unwrap());
@@ -1829,7 +1836,7 @@ mod votacion {
         #[ink::test]
         fn test_postular_votante_votacion_error_usuario_no_aceptado() {
             let accounts = default_accounts::<DefaultEnvironment>();
-            let mut votacion = Votacion::default();
+            let mut votacion = Votacion::new();
             let id_eleccion = votacion.crear_eleccion(Fecha::new(1, 1, 2024), Fecha::new(31, 12, 2024)).unwrap();
 
             set_block_timestamp::<DefaultEnvironment>(Fecha::new(31, 12, 2023).timestamp().unwrap());
@@ -1845,7 +1852,7 @@ mod votacion {
         #[ink::test]
         fn test_postular_votante_votacion_error_usuario_no_encontrado() {
             let accounts = default_accounts::<DefaultEnvironment>();
-            let mut votacion = Votacion::default();
+            let mut votacion = Votacion::new();
             let id_eleccion = votacion.crear_eleccion(Fecha::new(1, 1, 2024), Fecha::new(31, 12, 2024)).unwrap();
 
             set_block_timestamp::<DefaultEnvironment>(Fecha::new(31, 12, 2023).timestamp().unwrap());
@@ -1859,7 +1866,7 @@ mod votacion {
         fn test_agregar_votante_votacion() {
             let accounts = default_accounts::<DefaultEnvironment>();
             set_caller::<DefaultEnvironment>(accounts.alice);
-            let mut votacion = Votacion::default();
+            let mut votacion = Votacion::new();
             let id_eleccion = votacion.crear_eleccion(Fecha::new(1, 1, 2024), Fecha::new(31, 12, 2024)).unwrap();
 
             set_block_timestamp::<DefaultEnvironment>(Fecha::new(31, 12, 2023).timestamp().unwrap());
@@ -1882,7 +1889,7 @@ mod votacion {
         fn test_agregar_votante_votacion_error_no_es_admin() {
             let accounts = default_accounts::<DefaultEnvironment>();
             set_caller::<DefaultEnvironment>(accounts.alice);
-            let mut votacion = Votacion::default();
+            let mut votacion = Votacion::new();
             let id_eleccion = votacion.crear_eleccion(Fecha::new(1, 1, 2024), Fecha::new(31, 12, 2024)).unwrap();
 
             set_block_timestamp::<DefaultEnvironment>(Fecha::new(31, 12, 2023).timestamp().unwrap());
@@ -1901,7 +1908,7 @@ mod votacion {
         #[ink::test]
         fn test_votar_votacion() {
             let accounts = default_accounts::<DefaultEnvironment>();
-            let mut votacion = Votacion::default();
+            let mut votacion = Votacion::new();
             let id_eleccion = votacion.crear_eleccion(Fecha::new(1, 1, 2024), Fecha::new(31, 12, 2024)).unwrap();
 
             set_block_timestamp::<DefaultEnvironment>(Fecha::new(31, 12, 2023).timestamp().unwrap());
@@ -1933,7 +1940,7 @@ mod votacion {
         fn test_votar_votacion_error_usuario_no_encontrado() {
             let accounts = default_accounts::<DefaultEnvironment>();
             set_caller::<DefaultEnvironment>(accounts.alice);
-            let mut votacion = Votacion::default();
+            let mut votacion = Votacion::new();
             let id_eleccion = votacion.crear_eleccion(Fecha::new(1, 1, 2024), Fecha::new(31, 12, 2024)).unwrap();
             set_block_timestamp::<DefaultEnvironment>(Fecha::new(31, 12, 2023).timestamp().unwrap());
             
@@ -1954,7 +1961,7 @@ mod votacion {
         fn test_ya_voto_votacion() {
             let accounts = default_accounts::<DefaultEnvironment>();
             set_caller::<DefaultEnvironment>(accounts.frank);
-            let mut votacion = Votacion::default();
+            let mut votacion = Votacion::new();
             let id_eleccion = votacion.crear_eleccion(Fecha::new(1, 1, 2024), Fecha::new(31, 12, 2024)).unwrap();
             set_block_timestamp::<DefaultEnvironment>(Fecha::new(31, 12, 2023).timestamp().unwrap());
             
@@ -1987,7 +1994,7 @@ mod votacion {
         fn test_ya_voto_votacion_error_usuario_no_encontrado() {
             let accounts = default_accounts::<DefaultEnvironment>();
             set_caller::<DefaultEnvironment>(accounts.alice);
-            let mut votacion = Votacion::default();
+            let mut votacion = Votacion::new();
             let id_eleccion = votacion.crear_eleccion(Fecha::new(1, 1, 2024), Fecha::new(31, 12, 2024)).unwrap();
             set_block_timestamp::<DefaultEnvironment>(Fecha::new(31, 12, 2023).timestamp().unwrap());
             
@@ -2009,7 +2016,7 @@ mod votacion {
         fn test_ya_voto_votacion_error_no_es_admin() {
             let accounts = default_accounts::<DefaultEnvironment>();
             set_caller::<DefaultEnvironment>(accounts.frank);
-            let mut votacion = Votacion::default();
+            let mut votacion = Votacion::new();
             let id_eleccion = votacion.crear_eleccion(Fecha::new(1, 1, 2024), Fecha::new(31, 12, 2024)).unwrap();
             set_block_timestamp::<DefaultEnvironment>(Fecha::new(31, 12, 2023).timestamp().unwrap());
             
@@ -2032,7 +2039,7 @@ mod votacion {
         fn test_get_votos_candidato_votacion() {
             let accounts = default_accounts::<DefaultEnvironment>();
             set_caller::<DefaultEnvironment>(accounts.frank);
-            let mut votacion = Votacion::default();
+            let mut votacion = Votacion::new();
             let id_eleccion = votacion.crear_eleccion(Fecha::new(1, 1, 2024), Fecha::new(31, 12, 2024)).unwrap();
             set_block_timestamp::<DefaultEnvironment>(Fecha::new(31, 12, 2023).timestamp().unwrap());
             
@@ -2068,7 +2075,7 @@ mod votacion {
         fn test_get_votos_candidato_votacion_error_no_es_admin() {
             let accounts = default_accounts::<DefaultEnvironment>();
             set_caller::<DefaultEnvironment>(accounts.frank);
-            let mut votacion = Votacion::default();
+            let mut votacion = Votacion::new();
             let id_eleccion = votacion.crear_eleccion(Fecha::new(1, 1, 2024), Fecha::new(31, 12, 2024)).unwrap();
             set_block_timestamp::<DefaultEnvironment>(Fecha::new(31, 12, 2023).timestamp().unwrap());
             
@@ -2104,7 +2111,7 @@ mod votacion {
         #[ink::test]
         fn test_get_votos_candidato_votacion_error_eleccion_no_encontrada() {
             let accounts = default_accounts::<DefaultEnvironment>();
-            let votacion = Votacion::default();
+            let votacion = Votacion::new();
             assert_eq!(votacion.get_votos_candidato(0, accounts.bob), Err(VotacionError::EleccionNoEncontrada));
         }
 
@@ -2112,7 +2119,7 @@ mod votacion {
         fn test_get_votos_candidato_votacion_error_eleccion_no_finalizada() {
             let accounts = default_accounts::<DefaultEnvironment>();
             set_caller::<DefaultEnvironment>(accounts.frank);
-            let mut votacion = Votacion::default();
+            let mut votacion = Votacion::new();
             let id_eleccion = votacion.crear_eleccion(Fecha::new(1, 1, 2024), Fecha::new(31, 12, 2024)).unwrap();
             set_block_timestamp::<DefaultEnvironment>(Fecha::new(31, 12, 2023).timestamp().unwrap());
             
@@ -2135,7 +2142,7 @@ mod votacion {
         fn test_get_votos_candidato_votacion_error_usuario_no_es_candidato() {
             let accounts = default_accounts::<DefaultEnvironment>();
             set_caller::<DefaultEnvironment>(accounts.frank);
-            let mut votacion = Votacion::default();
+            let mut votacion = Votacion::new();
             let id_eleccion = votacion.crear_eleccion(Fecha::new(1, 1, 2024), Fecha::new(31, 12, 2024)).unwrap();
             set_block_timestamp::<DefaultEnvironment>(Fecha::new(31, 12, 2023).timestamp().unwrap());
             
@@ -2156,7 +2163,7 @@ mod votacion {
 
         #[ink::test]
         fn test_get_iniciada_votacion() {
-            let mut votacion = Votacion::default();
+            let mut votacion = Votacion::new();
             let id_eleccion = votacion.crear_eleccion(Fecha::new(1, 1, 2024), Fecha::new(31, 12, 2024)).unwrap();
             set_block_timestamp::<DefaultEnvironment>(Fecha::new(15, 6, 2024).timestamp().unwrap());
             assert!(votacion.get_iniciada(id_eleccion).unwrap());
@@ -2164,13 +2171,13 @@ mod votacion {
 
         #[ink::test]
         fn test_get_iniciada_votacion_error_eleccion_no_encontrada() {
-            let votacion = Votacion::default();
+            let votacion = Votacion::new();
             assert_eq!(votacion.get_iniciada(0), Err(VotacionError::EleccionNoEncontrada));
         }
 
         #[ink::test]
         fn test_get_finalizada_votacion() {
-            let mut votacion = Votacion::default();
+            let mut votacion = Votacion::new();
             let id_eleccion = votacion.crear_eleccion(Fecha::new(1, 1, 2024), Fecha::new(31, 12, 2024)).unwrap();
             set_block_timestamp::<DefaultEnvironment>(Fecha::new(1, 1, 2023).timestamp().unwrap());
             assert!(!votacion.get_finalizada(id_eleccion).unwrap());
@@ -2184,7 +2191,7 @@ mod votacion {
 
         #[ink::test]
         fn test_get_finalizada_votacion_error_eleccion_no_encontrada() {
-            let votacion = Votacion::default();
+            let votacion = Votacion::new();
             assert_eq!(votacion.get_finalizada(0), Err(VotacionError::EleccionNoEncontrada));
         }
 

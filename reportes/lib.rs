@@ -1,7 +1,6 @@
 #![cfg_attr(not(feature = "std"), no_std, no_main)]
 #![allow(clippy::arithmetic_side_effects)]
 
-//TODO: Agregar mejores comentarios a los ink(message)
 #[ink::contract]
 mod reportes {
     #[cfg(not(test))]
@@ -139,6 +138,9 @@ mod reportes {
 
         /// Crea y devuelve un nuevo reporte de los votantes registrados en una eleccion
         /// En caso de no haber votantes registrados, se devuelve un reporte con una lista vacia
+        /// 
+        /// # Errores
+        /// Devuelve un error si la eleccion no es encontrada
         #[ink(message)]
         pub fn reporte_registro_votantes(&self, eleccion_id: u32) -> Result<DataRegistroVotantes> {
             let id_votantes = self.data_reporte_registro_votantes(eleccion_id)?;
@@ -155,6 +157,10 @@ mod reportes {
         }
 
         /// Crea y devuelve un nuevo reporte de la participacion en una eleccion
+        /// 
+        /// # Errores
+        /// - Devuelve un error si la eleccion no es encontrada
+        /// - Devuelve un error si la eleccion no finalizó
         #[ink(message)]
         pub fn reporte_participacion(&self, eleccion_id: u32) -> Result<DataParticipacion> {
             let data = self.data_reporte_participacion(eleccion_id)?;
@@ -171,6 +177,10 @@ mod reportes {
 
         /// Crea y devuelve un nuevo reporte del resultado de una eleccion 
         /// ordenado por cantidad de votos de mayor a menor
+        /// 
+        /// # Errores
+        /// - Devuelve un error si la eleccion no es encontrada
+        /// - Devuelve un error si la eleccion no finalizó
         #[ink(message)]
         pub fn reporte_resultado(&self, eleccion_id: u32) -> Result<DataResultado> {
             let mut data = self.data_reporte_resultado(eleccion_id)?;
