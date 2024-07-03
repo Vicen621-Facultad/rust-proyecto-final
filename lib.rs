@@ -37,14 +37,14 @@ mod reportes {
     )]
     pub struct DataParticipacion {
         votos: u32,
-        participacion: u128
+        porcentaje_participacion: u128
     }
 
     impl DataParticipacion {
-        fn new(votos: u32, participacion: u128) -> DataParticipacion {
+        fn new(votos: u32, porcentaje_participacion: u128) -> DataParticipacion {
             DataParticipacion{
                 votos,
-                participacion
+                porcentaje_participacion
             }
         }
     }
@@ -67,7 +67,6 @@ mod reportes {
         }
     }
 
-    // ASK: Preguntar si se tienen que guardar los datos o con solo devolverlos ya estaria
     #[ink(storage)]
     pub struct Reportes {
         #[cfg(not(test))]
@@ -89,51 +88,59 @@ mod reportes {
             Self {}
         }
         
+        /// Devuelve la informacion necesaria para crear el reporte de los votantes registrados en una eleccion
         #[cfg(not(test))]
         fn data_reporte_registro_votantes(&self, eleccion_id: u32) -> Result<Vec<AccountId>> {
             self.votacion.reporte_registro_votantes(eleccion_id)
         }
 
+        /// Devuelve la informacion necesaria para crear el reporte de la participacion en una eleccion
         #[cfg(not(test))]
         fn data_reporte_participacion(&self, eleccion_id: u32) -> Result<(u128, u128)> {
             self.votacion.reporte_participacion(eleccion_id)
         }
 
+        /// Devuelve la informacion necesaria para crear el reporte del resultado de una eleccion
         #[cfg(not(test))]
         fn data_reporte_resultado(&self, eleccion_id: u32) -> Result<Vec<(AccountId, u32)>> {
             self.votacion.reporte_resultado(eleccion_id)
         }
 
+        /// Devuelve un usuario a partir de su id
         #[cfg(not(test))]
         fn get_usuario(&self, id: AccountId) -> Result<Usuario> {
             self.votacion.get_usuario(id)
         }
 
-        // Funcion mockeada para devolver los votantes de una eleccion
+        /// Funcion mockeada para devolver los votantes de una eleccion
         #[cfg(test)]
         fn data_reporte_registro_votantes(&self, _eleccion_id: u32) -> Result<Vec<AccountId>> {
             Ok(vec![AccountId::from([0x1; 32]), AccountId::from([0x2; 32]), AccountId::from([0x3; 32])])
         }
 
-        // Funcion mockeada para devolver la informacion de la participacion de una eleccion
+        /// Funcion mockeada para devolver la informacion de la participacion de una eleccion
         #[cfg(test)]
         fn data_reporte_participacion(&self, _eleccion_id: u32) -> Result<(u128, u128)> {
             Ok((10, 4))
         }
 
-        // Funcion mockeada para devolver la informacion del resultado de una eleccion
+        /// Funcion mockeada para devolver la informacion del resultado de una eleccion
         #[cfg(test)]
         fn data_reporte_resultado(&self, _eleccion_id: u32) -> Result<Vec<(AccountId, u32)>> {
             Ok(vec![(AccountId::from([0x1;32]), 2), (AccountId::from([0x2;32]), 0), (AccountId::from([0x3;32]), 1)])
         }
 
-        // Funcion mockeada para devolver un usuario
+        /// Funcion mockeada para devolver un usuario
         #[cfg(test)]
         fn get_usuario(&self, id: AccountId) -> Result<Usuario> {
             Ok(Usuario::new(id, "test".to_string(), "test".to_string(), "direccion".to_string(), "12345678".to_string(), 18))
         }
 
-        /// Devuelve el reporte de registro de votantes de una eleccion
+        /// Crea y devuelve un nuevo reporte de los votantes registrados en una eleccion
+        /// En caso de no haber votantes registrados, se devuelve un reporte con una lista vacia
+        /// 
+        /// # Errores
+        /// Devuelve un error si la eleccion no es encontrada
         #[ink(message)]
         pub fn reporte_registro_votantes(&self, eleccion_id: u32) -> Result<DataRegistroVotantes> {
             let id_votantes = self.data_reporte_registro_votantes(eleccion_id)?;
@@ -149,7 +156,11 @@ mod reportes {
             Ok(DataRegistroVotantes::new(usuarios_votantes))
         }
 
-        /// Devuelve el reporte de participacion de una eleccion
+        /// Crea y devuelve un nuevo reporte de la participacion en una eleccion
+        /// 
+        /// # Errores
+        /// - Devuelve un error si la eleccion no es encontrada
+        /// - Devuelve un error si la eleccion no finalizó
         #[ink(message)]
         pub fn reporte_participacion(&self, eleccion_id: u32) -> Result<DataParticipacion> {
             let data = self.data_reporte_participacion(eleccion_id)?;
@@ -164,7 +175,12 @@ mod reportes {
             Ok(DataParticipacion::new(num_votantes_voto as u32, participacion))
         }
 
-        /// Devuelve el reporte de resultado de una eleccion
+        /// Crea y devuelve un nuevo reporte del resultado de una eleccion 
+        /// ordenado por cantidad de votos de mayor a menor
+        /// 
+        /// # Errores
+        /// - Devuelve un error si la eleccion no es encontrada
+        /// - Devuelve un error si la eleccion no finalizó
         #[ink(message)]
         pub fn reporte_resultado(&self, eleccion_id: u32) -> Result<DataResultado> {
             let mut data = self.data_reporte_resultado(eleccion_id)?;
@@ -187,7 +203,7 @@ mod reportes {
         fn test_new_data_participacion() {
             let data = DataParticipacion::new(1, 1);
             assert_eq!(data.votos, 1);
-            assert_eq!(data.participacion, 1);
+            assert_eq!(data.porcentaje_participacion, 1);
         }
 
         #[test]
@@ -208,7 +224,7 @@ mod reportes {
             let reportes = Reportes::new();
             let data = reportes.reporte_participacion(1).unwrap();
             assert_eq!(data.votos, 4);
-            assert_eq!(data.participacion, 40);
+            assert_eq!(data.porcentaje_participacion, 40);
         }
 
         #[test]
