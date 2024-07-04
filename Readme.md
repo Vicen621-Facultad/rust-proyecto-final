@@ -14,3 +14,9 @@
 Branch personal -> development branch -> master branch.
 De esta manera se evitara hacer deploys con errores
 - **NO BUILDEAR NUNCA CON** `cargo build` **HACERLO SIMPRE CON** `cargo contract build`
+
+## Links
+
+- [Faucet de Rococo](https://use.ink/faucet)
+- Contrato reportes: [5H5ftc1BoGdU557f6jiRSBcNd639o2VXGQ6UBpjZxxLDVA9H](https://ui.use.ink/contract/5H5ftc1BoGdU557f6jiRSBcNd639o2VXGQ6UBpjZxxLDVA9H)
+- Contrato votacion: [5CmsLq1LNq4LEFFiD8XQrsjMgTYFZbRqhpwV4jXzM2Jhfcs4](https://ui.use.ink/contract/5CmsLq1LNq4LEFFiD8XQrsjMgTYFZbRqhpwV4jXzM2Jhfcs4)
